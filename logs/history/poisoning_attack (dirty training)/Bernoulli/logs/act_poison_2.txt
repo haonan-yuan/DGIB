@@ -1,0 +1,31 @@
+ 1 Loading dataset act_poison_2
+ 2 total length: 30, test length: 8
+ 3   6%|█████████▊                                                                                                                                               | 64/1000 [01:41<20:03,  1.29s/it]
+ 4 Epoch:1, Loss: 53.6439, Time: 11.914
+ 5 Current: Epoch:1, Train AUC:0.7058, Val AUC: 0.6983, Test AUC: 0.7084
+ 6 Train: Epoch:1, Train AUC:0.7058, Val AUC: 0.6983, Test AUC: 0.7084
+ 7 Test: Epoch:1, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561
+ 8 Epoch:10, Loss: 53.6847, Time: 1.557
+ 9 Current: Epoch:10, Train AUC:0.7056, Val AUC: 0.6985, Test AUC: 0.7095
+10 Train: Epoch:8, Train AUC:0.7062, Val AUC: 0.6989, Test AUC: 0.7098
+11 Test: Epoch:8, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561
+12 Epoch:20, Loss: 53.6011, Time: 1.790
+13 Current: Epoch:20, Train AUC:0.7059, Val AUC: 0.6979, Test AUC: 0.7095
+14 Train: Epoch:18, Train AUC:0.7059, Val AUC: 0.6995, Test AUC: 0.7097
+15 Test: Epoch:18, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561
+16 Epoch:30, Loss: 53.5413, Time: 1.338
+17 Current: Epoch:30, Train AUC:0.7061, Val AUC: 0.6986, Test AUC: 0.7097
+18 Train: Epoch:18, Train AUC:0.7059, Val AUC: 0.6995, Test AUC: 0.7097
+19 Test: Epoch:18, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561
+20 Epoch:40, Loss: 53.4480, Time: 1.306
+21 Current: Epoch:40, Train AUC:0.7059, Val AUC: 0.6981, Test AUC: 0.7093
+22 Train: Epoch:18, Train AUC:0.7059, Val AUC: 0.6995, Test AUC: 0.7097
+23 Test: Epoch:18, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561
+24 Epoch:50, Loss: 53.5817, Time: 1.324
+25 Current: Epoch:50, Train AUC:0.7061, Val AUC: 0.6983, Test AUC: 0.7098
+26 Train: Epoch:18, Train AUC:0.7059, Val AUC: 0.6995, Test AUC: 0.7097
+27 Test: Epoch:18, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561
+28 Epoch:60, Loss: 53.5555, Time: 1.512
+29 Current: Epoch:60, Train AUC:0.7064, Val AUC: 0.6981, Test AUC: 0.7102
+30 Train: Epoch:18, Train AUC:0.7059, Val AUC: 0.6995, Test AUC: 0.7097
+31 Test: Epoch:18, Train AUC:0.6903, Val AUC: 0.6953, Test AUC: 0.6561

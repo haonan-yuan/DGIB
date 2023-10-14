@@ -1,0 +1,39 @@
+ 1 Loading dataset act_poison_4
+ 2   9%|███████████▍                                                                                                                       | 87/1000 [02:04<19:33,  1.29s/it]
+ 3 total length: 30, test length: 8
+ 4 Epoch:1, Loss: 1481.7356, Time: 11.437
+ 5 Current: Epoch:1, Train AUC:0.6449, Val AUC: 0.6238, Test AUC: 0.6203
+ 6 Train: Epoch:1, Train AUC:0.6449, Val AUC: 0.6238, Test AUC: 0.6203
+ 7 Test: Epoch:1, Train AUC:0.6386, Val AUC: 0.6305, Test AUC: 0.6417
+ 8 Epoch:10, Loss: 1482.1462, Time: 1.262
+ 9 Current: Epoch:10, Train AUC:0.6452, Val AUC: 0.6242, Test AUC: 0.6211
+10 Train: Epoch:5, Train AUC:0.6445, Val AUC: 0.6255, Test AUC: 0.6208
+11 Test: Epoch:5, Train AUC:0.6386, Val AUC: 0.6305, Test AUC: 0.6417
+12 Epoch:20, Loss: 1478.9707, Time: 1.265
+13 Current: Epoch:20, Train AUC:0.6448, Val AUC: 0.6248, Test AUC: 0.6202
+14 Train: Epoch:11, Train AUC:0.6438, Val AUC: 0.6259, Test AUC: 0.6211
+15 Test: Epoch:11, Train AUC:0.6386, Val AUC: 0.6305, Test AUC: 0.6417
+16 Epoch:30, Loss: 1478.3264, Time: 1.325
+17 Current: Epoch:30, Train AUC:0.6452, Val AUC: 0.6239, Test AUC: 0.6207
+18 Train: Epoch:11, Train AUC:0.6438, Val AUC: 0.6259, Test AUC: 0.6211
+19 Test: Epoch:11, Train AUC:0.6386, Val AUC: 0.6305, Test AUC: 0.6417
+20 Epoch:40, Loss: 1479.1364, Time: 1.225
+21 Current: Epoch:40, Train AUC:0.6450, Val AUC: 0.6248, Test AUC: 0.6201
+22 Train: Epoch:11, Train AUC:0.6438, Val AUC: 0.6259, Test AUC: 0.6211
+23 Test: Epoch:11, Train AUC:0.6386, Val AUC: 0.6305, Test AUC: 0.6417
+24 Epoch:50, Loss: 1478.4180, Time: 1.306
+25 Current: Epoch:50, Train AUC:0.6443, Val AUC: 0.6232, Test AUC: 0.6203
+26 Train: Epoch:42, Train AUC:0.6447, Val AUC: 0.6265, Test AUC: 0.6205
+27 Test: Epoch:42, Train AUC:0.6387, Val AUC: 0.6305, Test AUC: 0.6417
+28 Epoch:60, Loss: 1478.0557, Time: 1.281
+29 Current: Epoch:60, Train AUC:0.6447, Val AUC: 0.6242, Test AUC: 0.6201
+30 Train: Epoch:42, Train AUC:0.6447, Val AUC: 0.6265, Test AUC: 0.6205
+31 Test: Epoch:42, Train AUC:0.6387, Val AUC: 0.6305, Test AUC: 0.6417
+32 Epoch:70, Loss: 1477.8757, Time: 1.213
+33 Current: Epoch:70, Train AUC:0.6447, Val AUC: 0.6244, Test AUC: 0.6207
+34 Train: Epoch:42, Train AUC:0.6447, Val AUC: 0.6265, Test AUC: 0.6205
+35 Test: Epoch:42, Train AUC:0.6387, Val AUC: 0.6305, Test AUC: 0.6417
+36 Epoch:80, Loss: 1478.0754, Time: 1.221
+37 Current: Epoch:80, Train AUC:0.6446, Val AUC: 0.6237, Test AUC: 0.6207
+38 Train: Epoch:42, Train AUC:0.6447, Val AUC: 0.6265, Test AUC: 0.6205
+39 Test: Epoch:42, Train AUC:0.6387, Val AUC: 0.6305, Test AUC: 0.6417

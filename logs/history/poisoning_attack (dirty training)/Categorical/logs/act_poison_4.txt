@@ -1,0 +1,23 @@
+ 1 Loading dataset act_poison_4
+ 2 total length: 30, test length: 8
+ 3   5%|███████▋                                                                                                                                                 | 50/1000 [01:22<19:45,  1.25s/it]
+ 4 Epoch:1, Loss: 1259.9264, Time: 20.864
+ 5 Current: Epoch:1, Train AUC:0.6589, Val AUC: 0.6482, Test AUC: 0.6577
+ 6 Train: Epoch:1, Train AUC:0.6589, Val AUC: 0.6482, Test AUC: 0.6577
+ 7 Test: Epoch:1, Train AUC:0.7037, Val AUC: 0.7053, Test AUC: 0.6923
+ 8 Epoch:10, Loss: 1068.8641, Time: 1.178
+ 9 Current: Epoch:10, Train AUC:0.6271, Val AUC: 0.6172, Test AUC: 0.6203
+10 Train: Epoch:1, Train AUC:0.6589, Val AUC: 0.6482, Test AUC: 0.6577
+11 Test: Epoch:1, Train AUC:0.7037, Val AUC: 0.7053, Test AUC: 0.6923
+12 Epoch:20, Loss: 848.1935, Time: 1.197
+13 Current: Epoch:20, Train AUC:0.5644, Val AUC: 0.5607, Test AUC: 0.5532
+14 Train: Epoch:1, Train AUC:0.6589, Val AUC: 0.6482, Test AUC: 0.6577
+15 Test: Epoch:1, Train AUC:0.7037, Val AUC: 0.7053, Test AUC: 0.6923
+16 Epoch:30, Loss: 736.4492, Time: 1.539
+17 Current: Epoch:30, Train AUC:0.5586, Val AUC: 0.5542, Test AUC: 0.5524
+18 Train: Epoch:1, Train AUC:0.6589, Val AUC: 0.6482, Test AUC: 0.6577
+19 Test: Epoch:1, Train AUC:0.7037, Val AUC: 0.7053, Test AUC: 0.6923
+20 Epoch:40, Loss: 642.0118, Time: 1.227
+21 Current: Epoch:40, Train AUC:0.5551, Val AUC: 0.5620, Test AUC: 0.5498
+22 Train: Epoch:1, Train AUC:0.6589, Val AUC: 0.6482, Test AUC: 0.6577
+23 Test: Epoch:1, Train AUC:0.7037, Val AUC: 0.7053, Test AUC: 0.6923

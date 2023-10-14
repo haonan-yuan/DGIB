@@ -1,0 +1,29 @@
+ 1 Loading dataset yelp
+ 2   5%|█████████▏                                                                                                                                                                | 54/1000 [01:41<26:32,  1.68s/it]
+ 3 total length: 24, test length: 8
+ 4 Epoch:1, Loss: 19.0752, Time: 11.762
+ 5 Current: Epoch:1, Train AUC:0.7766, Val AUC: 0.7528, Test AUC: 0.7656
+ 6 Train: Epoch:1, Train AUC:0.7766, Val AUC: 0.7656, Test AUC: 0.7656
+ 7 Test: Epoch:1, Train AUC:0.7938, Val AUC: 0.7523, Test AUC: 0.7599
+ 8 Epoch:10, Loss: 19.0665, Time: 1.684
+ 9 Current: Epoch:10, Train AUC:0.7757, Val AUC: 0.7534, Test AUC: 0.7642
+10 Train: Epoch:4, Train AUC:0.7762, Val AUC: 0.7667, Test AUC: 0.7667
+11 Test: Epoch:4, Train AUC:0.7938, Val AUC: 0.7523, Test AUC: 0.7599
+12 Epoch:20, Loss: 19.0631, Time: 1.569
+13 Current: Epoch:20, Train AUC:0.7755, Val AUC: 0.7538, Test AUC: 0.7653
+14 Train: Epoch:4, Train AUC:0.7762, Val AUC: 0.7667, Test AUC: 0.7667
+15 Test: Epoch:4, Train AUC:0.7938, Val AUC: 0.7523, Test AUC: 0.7599
+16 Epoch:30, Loss: 19.0576, Time: 1.716
+17 Current: Epoch:30, Train AUC:0.7759, Val AUC: 0.7561, Test AUC: 0.7654
+18 Train: Epoch:4, Train AUC:0.7762, Val AUC: 0.7667, Test AUC: 0.7667
+19 Test: Epoch:4, Train AUC:0.7938, Val AUC: 0.7523, Test AUC: 0.7599
+20 Epoch:40, Loss: 19.0565, Time: 1.744
+21 Current: Epoch:40, Train AUC:0.7760, Val AUC: 0.7524, Test AUC: 0.7652
+22 Train: Epoch:4, Train AUC:0.7762, Val AUC: 0.7667, Test AUC: 0.7667
+23 Test: Epoch:4, Train AUC:0.7938, Val AUC: 0.7523, Test AUC: 0.7599
+24 Epoch:50, Loss: 19.0487, Time: 1.882
+25 Current: Epoch:50, Train AUC:0.7762, Val AUC: 0.7533, Test AUC: 0.7646
+26 Train: Epoch:4, Train AUC:0.7762, Val AUC: 0.7667, Test AUC: 0.7667
+27 Test: Epoch:4, Train AUC:0.7938, Val AUC: 0.7523, Test AUC: 0.7599
+28    clean_train_auc  clean_val_auc  clean_test_auc  epoch  attacked_train_auc  attacked_val_auc  attacked_test_auc  epoch_time
+29 0         0.776242       0.766703        0.766703      4            0.793779           0.75228           0.759943     1.91192
