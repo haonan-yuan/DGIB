@@ -15,7 +15,7 @@ Main package requirements:
 - `PyTorch == 1.9.1`
 - `PyTorch-Geometric == 2.0.1`
 
-To install the comlete requiring packages, using following command at root directory of the repository:
+To install the complete requiring packages, use following command at the root directory of the repository:
 
 ```setup
 pip install -r requirements.txt
@@ -41,18 +41,18 @@ To evaluate DGIB with trained models, run the following command in the directory
 python main.py --mode=eval --use_cfg=1 --attack=<attack_mode> --distribution=<dis_name>  --dataset=<dataset_name>
 ```
 
-Please put the trained model in the directory `./saved_model`. We have already provided the pre-trained models for all settings. Note that, the model under evasive adversarial attacks is trained on the clean dataset and tested on the evasive attacked data, so the pretrained model parameters are the same with models trained on the clean datasets in `./saved_model/original_evasive`.
+Please put the trained model in the directory `./saved_model`. We have already provided the pre-trained models for all settings. Note that, the model under evasive adversarial attacks is trained on the clean dataset and tested on the evasive attacked data, so the pre-trained model parameters are the same as models trained on the clean datasets in `./saved_model/original_evasive`.
 
 ### Explanations for the arguments:
 
 - `mode`: train the model, or directly evaluate with saved parameters.
 - `use_cfg`: if training with the preset configurations. 
-- `attack_mode`: adversarial attacking modes, including "random", "evasive", "poisoning".
-- `dis_name`: DGIB verisons, including "Bernoulli" for DGIB-Bern and "categorical" for DGIB-Cat.
-- `dataset_name`: name of the datasets, including "collab", "yelp", "act".
+- `attack_mode`: adversarial attacking modes, including "random", "evasive", and "poisoning".
+- `dis_name`: DGIB versions, including "Bernoulli" for DGIB-Bern and "categorical" for DGIB-Cat.
+- `dataset_name`: name of the datasets, including "collab", "yelp", and "act".
 
 #### Configurations for `dataset_name` under different attacking modes
-- Non-targeted adversarial attack: `dataset_name` is chosen from "collab", "yelp", "act" (We report results simultaneously for "Clean", "Structure Attack" and "Feature Attack").
+- Non-targeted adversarial attack: `dataset_name` is chosen from "collab", "yelp", and "act" (We report results simultaneously for "Clean", "Structure Attack" and "Feature Attack").
 - Targeted adversarial attack (evasive): `dataset_name` is chosen from "collab_evasive_1", "collab_evasive_2", "collab_evasive_3", "collab_evasive_4", "yelp_evasive_1", "yelp_evasive_2", "yelp_evasive_3", "yelp_evasive_4", "act_evasive_1", "act_evasive_2", "act_evasive_3", "act_evasive_4".
 - Targeted adversarial attack (poisoning): `dataset_name` is chosen from "collab_poisoning_1", "collab_poisoning_2", "collab_poisoning_3", "collab_poisoning_4", "yelp_poisoning_1", "yelp_poisoning_2", "yelp_poisoning_3", "yelp_poisoning_4", "act_poisoning_1", "act_poisoning_2", "act_poisoning_3", "act_poisoning_4".
 
