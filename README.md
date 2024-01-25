@@ -83,4 +83,4 @@ If you find this repository helpful, please consider citing the following paper.
 
 ## 4. Acknowledgements
 
-Part of this code is inspired by Tailin Wu et al.'s [GIB](https://github.com/snap-stanford/GIB). We owe sincere thanks to their valuable efforts and contributions.
+Part of this code is inspired by Tailin Wu et al.'s [GIB](https://github.com/snap-stanford/GIB) and Yaxin Li et al.'s [DeepRobust](https://github.com/DSE-MSU/DeepRobust). We owe sincere thanks to their valuable efforts and contributions.
