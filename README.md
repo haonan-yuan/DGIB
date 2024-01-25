@@ -1,12 +1,22 @@
 # [WWW 2024] Dynamic Graph Information Bottleneck (DGIB)
 
-This repository is the official implementation of "Dynamic Graph Information Bottleneck" (DGIB) submitted to the research tracks of The Web Conference 2024 (WWW 2024).
+This repository is the official implementation of "[Dynamic Graph Information Bottleneck (DGIB)](https://openreview.net/forum?id=j3jFiUQZvH)" accepted by the research tracks of The Web Conference 2024 (WWW 2024).
 
-## Abstract
+[![Black Logo](framework.png)](https://openreview.net/forum?id=j3jFiUQZvH)
+<p align="center">
+  <a href="https://github.com/RingBDStack/DGIB/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue" /></a> &nbsp; &nbsp;
+  <a href="https://github.com/ambv/black"><img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a> &nbsp; &nbsp;
+  <img src="https://img.shields.io/github/stars/RingBDStack/DGIB?color=yellow&label=Star" alt="Stars" > &nbsp; &nbsp;
+  <img src="https://img.shields.io/github/forks/RingBDStack/DGIB?color=blue&label=Fork" alt="Forks" >
+</p>
 
-Dynamic Graphs widely exist in the real world, which carry complicated spatial and temporal feature patterns, challenging their representation learning. Dynamic Graph Neural Networks (DGNNs) have shown impressive predictive abilities by exploiting the intrinsic dynamics. However, DGNNs exhibit limited robustness, prone to adversarial attacks. This paper presents the novel Dynamic Graph Information Bottleneck (DGIB) framework to learn robust and discriminative representations. Leveraged by the Information Bottleneck (IB) principle, we first propose the expected optimal representations should satisfy the Minimal-Sufficient-Consensual (MSC) Condition. To compress redundant as well as conserve meritorious information into latent representation, DGIBiteratively directs and refines the structural and feature information flow passing through graph snapshots. To meet the MSC Condition, we decompose the overall IB objectives into $DGIB_{MS}$ and $DGIB_{C}$, in which the $DGIB_{MS}$ channel aims to learn the minimal and sufficient representations, with the $DGIB_{C}$ channel guarantees the predictive consensus. Extensive experiments on real-world and synthetic dynamic graph datasets demonstrate the superior robustness of DGIB against adversarial attacks compared with state-of-the-art baselines in the link prediction task. To the best of our knowledge, DGIB is the first work to learn robust representations of dynamic graphs grounded in the information-theoretic IB principle.
+------
 
-## Requirements
+## 0. Abstract
+
+Dynamic Graphs widely exist in the real world, which carry complicated spatial and temporal feature patterns, challenging their representation learning. Dynamic Graph Neural Networks (DGNNs) have shown impressive predictive abilities by exploiting the intrinsic dynamics. However, DGNNs exhibit limited robustness, prone to adversarial attacks. This paper presents the novel ***D***ynamic ***G***raph ***I***nformation ***B***ottleneck (***DGIB***) framework to learn robust and discriminative representations. Leveraged by the Information Bottleneck (IB) principle, we first propose the expected optimal representations should satisfy the *Minimal-Sufficient-Consensual (MSC)* Condition. To compress redundant as well as conserve meritorious information into latent representation, DGIB iteratively directs and refines the structural and feature information flow passing through graph snapshots. To meet the *MSC* Condition, we decompose the overall IB objectives into DGIB<sub>MS</sub> and DGIB<sub>C</sub>, in which the DGIB<sub>MS</sub> channel aims to learn the minimal and sufficient representations, with the DGIB<sub>C</sub> channel guarantees the predictive consensus. Extensive experiments on real-world and synthetic dynamic graph datasets demonstrate the superior robustness of DGIB against adversarial attacks compared with state-of-the-art baselines in the link prediction task. To the best of our knowledge, DGIB is the first work to learn robust representations of dynamic graphs grounded in the information-theoretic IB principle.
+
+## 1. Requirements
 
 Main package requirements:
 
@@ -15,15 +25,13 @@ Main package requirements:
 - `PyTorch == 1.9.1`
 - `PyTorch-Geometric == 2.0.1`
 
-To install the complete requiring packages, use following command at the root directory of the repository:
+To install the complete requiring packages, use the following command at the root directory of the repository:
 
 ```setup
 pip install -r requirements.txt
 ```
 
-
-
-## Usage
+## 2. Quick Start
 
 ### Training
 
@@ -43,7 +51,7 @@ python main.py --mode=eval --use_cfg=1 --attack=<attack_mode> --distribution=<di
 
 Please put the trained model in the directory `./saved_model`. We have already provided the pre-trained models for all settings. Note that, the model under evasive adversarial attacks is trained on the clean dataset and tested on the evasive attacked data, so the pre-trained model parameters are the same as models trained on the clean datasets in `./saved_model/original_evasive`.
 
-### Explanations for the arguments:
+#### Explanations for the arguments:
 
 - `mode`: train the model, or directly evaluate with saved parameters.
 - `use_cfg`: if training with the preset configurations. 
@@ -59,3 +67,20 @@ Please put the trained model in the directory `./saved_model`. We have already p
 ### Reproductivity
 
 To reproduce the main results, we have already provided experiment logs in the directory `./logs/history`. 
+
+## 3. Citation
+If you find this repository helpful, please consider citing the following paper. We welcome any discussions with [yuanhn@buaa.edu.cn](mailto:yuanhn@buaa.edu.cn).
+
+```bibtex
+@inproceedings{yuan2024dynamic,
+  title={Dynamic Graph Information Bottleneck},
+  author={Yuan, Haonan and Sun, Qingyun and Fu, Xingcheng and Ji, Cheng and Li, Jianxin},
+  booktitle={The Web Conference 2024},
+  year={2024},
+  url={https://openreview.net/forum?id=j3jFiUQZvH}
+}
+```
+
+## 4. Acknowledgements
+
+Part of this code is inspired by Tailin Wu et al.'s [GIB](https://github.com/snap-stanford/GIB). We owe sincere thanks to their valuable efforts and contributions.
