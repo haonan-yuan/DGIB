@@ -3,12 +3,6 @@
 This repository is the official implementation of "[Dynamic Graph Information Bottleneck (DGIB)](https://openreview.net/forum?id=j3jFiUQZvH)" accepted by the research tracks of The Web Conference 2024 (WWW 2024).
 
 [![Black Logo](framework.png)](https://openreview.net/forum?id=j3jFiUQZvH)
-<p align="center">
-  <a href="https://github.com/RingBDStack/DGIB/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue" /></a> &nbsp; &nbsp;
-  <a href="https://github.com/ambv/black"><img alt="Code Style" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a> &nbsp; &nbsp;
-  <img src="https://img.shields.io/github/stars/RingBDStack/DGIB?color=yellow&label=Star" alt="Stars" > &nbsp; &nbsp;
-  <img src="https://img.shields.io/github/forks/RingBDStack/DGIB?color=blue&label=Fork" alt="Forks" >
-</p>
 
 ------
 
