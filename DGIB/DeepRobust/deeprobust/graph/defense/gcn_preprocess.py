@@ -5,7 +5,8 @@ import torch
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
 import sys, os
-sys.path.append(os.path.join(os.path.dirname("__file__"), '..', '..', '..'))
+
+sys.path.append(os.path.join(os.path.dirname("__file__"), "..", "..", ".."))
 from DGIB.DeepRobust.deeprobust.graph import utils
 from DGIB.DeepRobust.deeprobust.graph.defense import GCN
 from tqdm import tqdm
@@ -14,22 +15,64 @@ import numpy as np
 
 
 class GCNSVD(GCN):
+    def __init__(
+        self,
+        nfeat,
+        nhid,
+        nclass,
+        dropout=0.5,
+        lr=0.01,
+        weight_decay=5e-4,
+        with_relu=True,
+        with_bias=True,
+        device="cpu",
+    ):
 
-    def __init__(self, nfeat, nhid, nclass, dropout=0.5, lr=0.01, weight_decay=5e-4, with_relu=True, with_bias=True, device='cpu'):
-
-        super(GCNSVD, self).__init__(nfeat, nhid, nclass, dropout, lr, weight_decay, with_relu, with_bias, device=device)
+        super(GCNSVD, self).__init__(
+            nfeat,
+            nhid,
+            nclass,
+            dropout,
+            lr,
+            weight_decay,
+            with_relu,
+            with_bias,
+            device=device,
+        )
         self.device = device
 
-    def fit(self, features, adj, labels, idx_train, idx_val=None, k=50, train_iters=200, initialize=True, verbose=True):
+    def fit(
+        self,
+        features,
+        adj,
+        labels,
+        idx_train,
+        idx_val=None,
+        k=50,
+        train_iters=200,
+        initialize=True,
+        verbose=True,
+    ):
 
         modified_adj = self.truncatedSVD(adj, k=k)
         # modified_adj_tensor = utils.sparse_mx_to_torch_sparse_tensor(self.modified_adj)
-        features, modified_adj, labels = utils.to_tensor(features, modified_adj, labels, device=self.device)
+        features, modified_adj, labels = utils.to_tensor(
+            features, modified_adj, labels, device=self.device
+        )
 
         self.modified_adj = modified_adj
         self.features = features
         self.labels = labels
-        super().fit(features, modified_adj, labels, idx_train, idx_val, train_iters=train_iters, initialize=initialize, verbose=verbose)
+        super().fit(
+            features,
+            modified_adj,
+            labels,
+            idx_train,
+            idx_val,
+            train_iters=train_iters,
+            initialize=initialize,
+            verbose=verbose,
+        )
 
     def truncatedSVD(self, data, k=50):
         # print('=== GCN-SVD: rank={} ==='.format(k))
@@ -51,22 +94,67 @@ class GCNSVD(GCN):
 
 
 class GCNJaccard(GCN):
+    def __init__(
+        self,
+        nfeat,
+        nhid,
+        nclass,
+        binary_feature=True,
+        dropout=0.5,
+        lr=0.01,
+        weight_decay=5e-4,
+        with_relu=True,
+        with_bias=True,
+        num_layers=2,
+        device="cpu",
+    ):
 
-    def __init__(self, nfeat, nhid, nclass, binary_feature=True, dropout=0.5, lr=0.01, weight_decay=5e-4, with_relu=True, with_bias=True, num_layers=2, device='cpu'):
-
-        super(GCNJaccard, self).__init__(nfeat, nhid, nclass, dropout, lr, weight_decay, with_relu, with_bias, num_layers=num_layers, device=device)
+        super(GCNJaccard, self).__init__(
+            nfeat,
+            nhid,
+            nclass,
+            dropout,
+            lr,
+            weight_decay,
+            with_relu,
+            with_bias,
+            num_layers=num_layers,
+            device=device,
+        )
         self.device = device
         self.binary_feature = binary_feature
 
-    def fit(self, features, adj, labels, idx_train, idx_val=None, threshold=0.01, train_iters=200, initialize=True, verbose=True):
+    def fit(
+        self,
+        features,
+        adj,
+        labels,
+        idx_train,
+        idx_val=None,
+        threshold=0.01,
+        train_iters=200,
+        initialize=True,
+        verbose=True,
+    ):
         self.threshold = threshold
         modified_adj = self.drop_dissimilar_edges(features, adj)
         # modified_adj_tensor = utils.sparse_mx_to_torch_sparse_tensor(self.modified_adj)
-        features, modified_adj, labels = utils.to_tensor(features, modified_adj, labels, device=self.device)
+        features, modified_adj, labels = utils.to_tensor(
+            features, modified_adj, labels, device=self.device
+        )
         self.modified_adj = modified_adj
         self.features = features
         self.labels = labels
-        super().fit(features, modified_adj, labels, idx_train, idx_val, train_iters=train_iters, initialize=initialize, verbose=verbose)
+        super().fit(
+            features,
+            modified_adj,
+            labels,
+            idx_train,
+            idx_val,
+            train_iters=train_iters,
+            initialize=initialize,
+            verbose=verbose,
+        )
 
     def drop_dissimilar_edges(self, features, adj):
         if not sp.issparse(adj):
@@ -74,7 +162,7 @@ class GCNJaccard(GCN):
         modified_adj = adj.copy().tolil()
         # preprocessing based on features
 
-        print('=== GCN-Jaccrad ===')
+        print("=== GCN-Jaccrad ===")
         # isSparse = sp.issparse(features)
         edges = np.array(modified_adj.nonzero()).T
         removed_cnt = 0
@@ -99,7 +187,7 @@ class GCNJaccard(GCN):
                     modified_adj[n1, n2] = 0
                     modified_adj[n2, n1] = 0
                     removed_cnt += 1
-        print('removed %s edges in the original graph' % removed_cnt)
+        print("removed %s edges in the original graph" % removed_cnt)
         return modified_adj
 
     def _jaccard_similarity(self, a, b):

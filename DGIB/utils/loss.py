@@ -12,12 +12,12 @@ device = args.device
 EPS = 1e-15
 MAX_LOGVAR = 10
 
+
 class EnvLoss(nn.Module):
-    
-    def __init__(self,args) -> None:
+    def __init__(self, args) -> None:
         super().__init__()
         self.args = args
-        
+
     @staticmethod
     def maybe_num_nodes(index, num_nodes=None):
         return index.max().item() + 1 if num_nodes is None else num_nodes
@@ -25,22 +25,22 @@ class EnvLoss(nn.Module):
     def decoder(self, z, edge_index, sigmoid=True):
         value = (z[edge_index[0]] * z[edge_index[1]]).sum(dim=1)
         return torch.sigmoid(value) if sigmoid else value
-    
+
     def forward(self, z, pos_edge_index, neg_edge_index=None, decoder=None):
         if not decoder:
             decoder = self.decoder
         pos_loss = -torch.log(decoder(z, pos_edge_index) + EPS).mean()
         if neg_edge_index == None:
             args = self.args
-            if args.dataset == 'yelp':
-                neg_edge_index = bi_negative_sampling(pos_edge_index,
-                                                      args.num_nodes,
-                                                      args.shift)
+            if args.dataset == "yelp":
+                neg_edge_index = bi_negative_sampling(
+                    pos_edge_index, args.num_nodes, args.shift
+                )
             else:
                 neg_edge_index = negative_sampling(
                     pos_edge_index,
-                    num_neg_samples=pos_edge_index.size(1) *
-                    self.sampling_times)
+                    num_neg_samples=pos_edge_index.size(1) * self.sampling_times,
+                )
         neg_loss = -torch.log(1 - decoder(z, neg_edge_index) + EPS).mean()
 
         return pos_loss + neg_loss

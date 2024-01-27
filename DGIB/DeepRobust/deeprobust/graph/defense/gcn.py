@@ -10,6 +10,7 @@ from copy import deepcopy
 from sklearn.metrics import f1_score
 import pdb
 
+
 def normalize_adj_tensor(adj, sparse=False):
     device = adj.device
     if sparse:
@@ -22,12 +23,13 @@ def normalize_adj_tensor(adj, sparse=False):
     else:
         mx = adj + torch.eye(adj.shape[0]).to(device)
         rowsum = mx.sum(1)
-        r_inv = rowsum.pow(-1/2).flatten()
-        r_inv[torch.isinf(r_inv)] = 0.
+        r_inv = rowsum.pow(-1 / 2).flatten()
+        r_inv[torch.isinf(r_inv)] = 0.0
         r_mat_inv = torch.diag(r_inv)
         mx = r_mat_inv @ mx
         mx = mx @ r_mat_inv
     return mx
+
 
 class GraphConvolution(Module):
     """
@@ -42,7 +44,7 @@ class GraphConvolution(Module):
         if with_bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -50,7 +52,7 @@ class GraphConvolution(Module):
         # if self.bias is not None:
         #     self.bias.data.fill_(1)
 
-        stdv = 1. / math.sqrt(self.weight.size(1))
+        stdv = 1.0 / math.sqrt(self.weight.size(1))
         self.weight.data.uniform_(-stdv, stdv)
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
@@ -67,14 +69,30 @@ class GraphConvolution(Module):
             return output
 
     def __repr__(self):
-        return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ' -> ' \
-               + str(self.out_features) + ')'
+        return (
+            self.__class__.__name__
+            + " ("
+            + str(self.in_features)
+            + " -> "
+            + str(self.out_features)
+            + ")"
+        )
 
 
 class GCN(nn.Module):
-
-    def __init__(self, nfeat, nhid, nclass, dropout=0.5, lr=0.01, weight_decay=5e-4, with_relu=True, with_bias=True, device=None, num_layers=2):
+    def __init__(
+        self,
+        nfeat,
+        nhid,
+        nclass,
+        dropout=0.5,
+        lr=0.01,
+        weight_decay=5e-4,
+        with_relu=True,
+        with_bias=True,
+        device=None,
+        num_layers=2,
+    ):
 
         super(GCN, self).__init__()
 
@@ -85,7 +103,15 @@ class GCN(nn.Module):
         self.nclass = nclass
         self.num_layers = num_layers
         for i in range(self.num_layers):
-            setattr(self, "gc%d"%(i+1), GraphConvolution(nfeat if i == 0 else nhid, nclass if i==self.num_layers - 1 else nhid, with_bias=with_bias))
+            setattr(
+                self,
+                "gc%d" % (i + 1),
+                GraphConvolution(
+                    nfeat if i == 0 else nhid,
+                    nclass if i == self.num_layers - 1 else nhid,
+                    with_bias=with_bias,
+                ),
+            )
         # self.gc1 = GraphConvolution(nfeat, nhid, with_bias=with_bias)
         # self.gc2 = GraphConvolution(nhid, nclass, with_bias=with_bias)
         self.dropout = dropout
@@ -103,16 +129,16 @@ class GCN(nn.Module):
         self.features = None
 
     def forward(self, x, adj):
-        '''
+        """
             adj: normalized adjacency matrix
-        '''
+        """
         for i in range(self.num_layers):
             if i > 0:
                 x = F.dropout(x, self.dropout, training=self.training)
             if self.with_relu and i != self.num_layers - 1:
-                x = F.relu(getattr(self, "gc%d"%(i+1))(x, adj))
+                x = F.relu(getattr(self, "gc%d" % (i + 1))(x, adj))
             else:
-                x = getattr(self, "gc%d"%(i+1))(x, adj)
+                x = getattr(self, "gc%d" % (i + 1))(x, adj)
         # if self.with_relu:
         #     x = F.relu(self.gc1(x, adj))
         # else:
@@ -124,21 +150,35 @@ class GCN(nn.Module):
 
     def initialize(self):
         for i in range(self.num_layers):
-            getattr(self, "gc%d"%(i+1)).reset_parameters()
+            getattr(self, "gc%d" % (i + 1)).reset_parameters()
         # self.gc1.reset_parameters()
         # self.gc2.reset_parameters()
 
-    def fit(self, features, adj, labels, idx_train, idx_val=None, train_iters=200, initialize=True, verbose=False, normalize=True, patience=500):
-        '''
+    def fit(
+        self,
+        features,
+        adj,
+        labels,
+        idx_train,
+        idx_val=None,
+        train_iters=200,
+        initialize=True,
+        verbose=False,
+        normalize=True,
+        patience=500,
+    ):
+        """
             train the gcn model, when idx_val is not None, pick the best model
             according to the validation loss
-        '''
+        """
         self.device = self.gc1.weight.device
         if initialize:
             self.initialize()
 
         if type(adj) is not torch.Tensor:
-            features, adj, labels = utils.to_tensor(features, adj, labels, device=self.device)
+            features, adj, labels = utils.to_tensor(
+                features, adj, labels, device=self.device
+            )
         else:
             features = features.to(self.device)
             adj = adj.to(self.device)
@@ -160,13 +200,17 @@ class GCN(nn.Module):
             self._train_without_val(labels, idx_train, train_iters, verbose)
         else:
             if patience < train_iters:
-                self._train_with_early_stopping(labels, idx_train, idx_val, train_iters, patience, verbose)
+                self._train_with_early_stopping(
+                    labels, idx_train, idx_val, train_iters, patience, verbose
+                )
             else:
                 self._train_with_val(labels, idx_train, idx_val, train_iters, verbose)
 
     def _train_without_val(self, labels, idx_train, train_iters, verbose):
         self.train()
-        optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.Adam(
+            self.parameters(), lr=self.lr, weight_decay=self.weight_decay
+        )
         for i in range(train_iters):
             optimizer.zero_grad()
             output = self.forward(self.features, self.adj_norm)
@@ -174,7 +218,7 @@ class GCN(nn.Module):
             loss_train.backward()
             optimizer.step()
             if verbose and i % 10 == 0:
-                print('Epoch {}, training loss: {}'.format(i, loss_train.item()))
+                print("Epoch {}, training loss: {}".format(i, loss_train.item()))
 
         self.eval()
         output = self.forward(self.features, self.adj_norm)
@@ -182,8 +226,10 @@ class GCN(nn.Module):
 
     def _train_with_val(self, labels, idx_train, idx_val, train_iters, verbose):
         if verbose:
-            print('=== training gcn model ===')
-        optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+            print("=== training gcn model ===")
+        optimizer = optim.Adam(
+            self.parameters(), lr=self.lr, weight_decay=self.weight_decay
+        )
 
         best_loss_val = 100
         best_acc_val = 0
@@ -197,7 +243,7 @@ class GCN(nn.Module):
             optimizer.step()
 
             if verbose and i % 10 == 0:
-                print('Epoch {}, training loss: {}'.format(i, loss_train.item()))
+                print("Epoch {}, training loss: {}".format(i, loss_train.item()))
 
             self.eval()
             output = self.forward(self.features, self.adj_norm)
@@ -215,13 +261,19 @@ class GCN(nn.Module):
                 weights = deepcopy(self.state_dict())
 
         if verbose:
-            print('=== picking the best model according to the performance on validation ===')
+            print(
+                "=== picking the best model according to the performance on validation ==="
+            )
         self.load_state_dict(weights)
 
-    def _train_with_early_stopping(self, labels, idx_train, idx_val, train_iters, patience, verbose):
+    def _train_with_early_stopping(
+        self, labels, idx_train, idx_val, train_iters, patience, verbose
+    ):
         if verbose:
-            print('=== training gcn model ===')
-        optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+            print("=== training gcn model ===")
+        optimizer = optim.Adam(
+            self.parameters(), lr=self.lr, weight_decay=self.weight_decay
+        )
 
         early_stopping = patience
         best_loss_val = 100
@@ -235,7 +287,7 @@ class GCN(nn.Module):
             optimizer.step()
 
             if verbose and i % 10 == 0:
-                print('Epoch {}, training loss: {}'.format(i, loss_train.item()))
+                print("Epoch {}, training loss: {}".format(i, loss_train.item()))
 
             self.eval()
             output = self.forward(self.features, self.adj_norm)
@@ -259,7 +311,9 @@ class GCN(nn.Module):
                 break
 
         if verbose:
-             print('=== early stopping at {0}, loss_val = {1} ==='.format(i, best_loss_val) )
+            print(
+                "=== early stopping at {0}, loss_val = {1} ===".format(i, best_loss_val)
+            )
         self.load_state_dict(weights)
 
     def test(self, idx_test):
@@ -268,9 +322,11 @@ class GCN(nn.Module):
         # output = self.output
         loss_test = F.nll_loss(output[idx_test], self.labels[idx_test])
         acc_test = utils.accuracy(output[idx_test], self.labels[idx_test])
-        print("Test set results:",
-              "loss= {:.4f}".format(loss_test.item()),
-              "accuracy= {:.4f}".format(acc_test.item()))
+        print(
+            "Test set results:",
+            "loss= {:.4f}".format(loss_test.item()),
+            "accuracy= {:.4f}".format(acc_test.item()),
+        )
         return [loss_test.item(), acc_test.item()]
 
     def _set_parameters():
@@ -278,7 +334,7 @@ class GCN(nn.Module):
         pass
 
     def predict(self, features=None, adj=None):
-        '''By default, inputs are unnormalized data'''
+        """By default, inputs are unnormalized data"""
 
         self.eval()
         if features is None and adj is None:
@@ -293,4 +349,3 @@ class GCN(nn.Module):
             else:
                 self.adj_norm = normalize_adj_tensor(adj)
             return self.forward(self.features, self.adj_norm)
-

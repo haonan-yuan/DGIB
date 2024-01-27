@@ -10,10 +10,11 @@ import numpy as np
 
 
 class AdvTraining:
-    '''
+    """
         Adversarial training Framework for defending against attacks
-    '''
-    def __init__(self, model, adversary=None, device='cpu'):
+    """
+
+    def __init__(self, model, adversary=None, device="cpu"):
 
         self.model = model
         if adversary is None:
@@ -25,7 +26,3 @@ class AdvTraining:
         for i in range(train_iter):
             modified_adj = self.adversary.attack(features, adj)
             self.model.fit(features, modified_adj, train_iter, initialize=False)
-
-
-
-

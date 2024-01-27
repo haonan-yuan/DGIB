@@ -1,10 +1,11 @@
-'''
+"""
     This part of code is adopted from https://github.com/Hanjun-Dai/graph_adversarial_attack
     but modified to be integrated into the repository.
-'''
+"""
 
 import random
 import numpy as np
+
 
 class NstepReplaySubMemCell(object):
     def __init__(self, memory_size):
@@ -56,6 +57,7 @@ class NstepReplaySubMemCell(object):
 
         return list_st, list_at, list_rt, list_s_primes, list_term
 
+
 def hash_state_action(s_t, a_t):
     key = s_t[0]
     base = 179424673
@@ -69,6 +71,7 @@ def hash_state_action(s_t, a_t):
 
     key = (key * base + a_t) % base
     return key
+
 
 def nipa_hash_state_action(s_t, a_t):
     key = s_t[0]
@@ -84,8 +87,9 @@ def nipa_hash_state_action(s_t, a_t):
     key = (key * base + a_t) % base
     return key
 
+
 class NstepReplayMemCell(object):
-    def __init__(self, memory_size, balance_sample = False):
+    def __init__(self, memory_size, balance_sample=False):
         self.sub_list = []
         self.balance_sample = balance_sample
         self.sub_list.append(NstepReplaySubMemCell(memory_size))
@@ -110,13 +114,24 @@ class NstepReplayMemCell(object):
         if not self.balance_sample or self.sub_list[1].count < batch_size:
             return self.sub_list[0].sample(batch_size)
 
-        list_st, list_at, list_rt, list_s_primes, list_term = self.sub_list[0].sample(batch_size // 2)
-        list_st2, list_at2, list_rt2, list_s_primes2, list_term2 = self.sub_list[1].sample(batch_size - batch_size // 2)
+        list_st, list_at, list_rt, list_s_primes, list_term = self.sub_list[0].sample(
+            batch_size // 2
+        )
+        list_st2, list_at2, list_rt2, list_s_primes2, list_term2 = self.sub_list[
+            1
+        ].sample(batch_size - batch_size // 2)
 
-        return list_st + list_st2, list_at + list_at2, list_rt + list_rt2, list_s_primes + list_s_primes2, list_term + list_term2
+        return (
+            list_st + list_st2,
+            list_at + list_at2,
+            list_rt + list_rt2,
+            list_s_primes + list_s_primes2,
+            list_term + list_term2,
+        )
+
 
 class NstepReplayMem(object):
-    def __init__(self, memory_size, n_steps, balance_sample=False, model='rl_s2v'):
+    def __init__(self, memory_size, n_steps, balance_sample=False, model="rl_s2v"):
         self.mem_cells = []
         for i in range(n_steps - 1):
             self.mem_cells.append(NstepReplayMemCell(memory_size, False))
@@ -128,7 +143,7 @@ class NstepReplayMem(object):
 
     def add(self, s_t, a_t, r_t, s_prime, terminal, t):
         assert t >= 0 and t < self.n_steps
-        if self.model == 'nipa':
+        if self.model == "nipa":
             self.mem_cells[t].add(s_t, a_t, r_t, s_prime, terminal, use_hash=False)
         else:
             if t == self.n_steps - 1:
@@ -145,13 +160,15 @@ class NstepReplayMem(object):
                 sp = list_sp[i]
             self.add(list_st[i], list_at[i], list_rt[i], sp, list_term[i], t)
 
-    def sample(self, batch_size, t = None):
+    def sample(self, batch_size, t=None):
         if t is None:
             t = np.random.randint(self.n_steps)
-            list_st, list_at, list_rt, list_s_primes, list_term = self.mem_cells[t].sample(batch_size)
+            list_st, list_at, list_rt, list_s_primes, list_term = self.mem_cells[
+                t
+            ].sample(batch_size)
         return t, list_st, list_at, list_rt, list_s_primes, list_term
 
     def print_count(self):
         for i in range(self.n_steps):
             for j, cell in enumerate(self.mem_cells[i].sub_list):
-                print('Cell {} sub_list {}: {}'.format(i, j, cell.count))
+                print("Cell {} sub_list {}: {}".format(i, j, cell.count))

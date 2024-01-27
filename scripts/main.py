@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("..")
 
 from DGIB.config import args
@@ -15,7 +16,7 @@ args, data = load_data(args)
 
 # pre-logs
 log_dir = args.log_dir
-init_logger(prepare_dir(log_dir) + 'log_' + args.dataset + '.txt')
+init_logger(prepare_dir(log_dir) + "log_" + args.dataset + ".txt")
 info_dict = get_arg_dict(args)
 
 # Runner
@@ -27,17 +28,17 @@ runner = Runner(args, model, data)
 
 results = []
 
-if args.mode == 'train':
+if args.mode == "train":
     results = runner.run()
-elif args.mode == 'eval' and args.attack == 'random':
+elif args.mode == "eval" and args.attack == "random":
     results = runner.re_run()
-elif args.mode == 'eval' and args.attack == 'evasive':
+elif args.mode == "eval" and args.attack == "evasive":
     results = runner.re_run_evasive()
-elif args.mode == 'eval' and args.attack == 'poisoning':
+elif args.mode == "eval" and args.attack == "poisoning":
     results = runner.re_run_poisoning()
 
 # post-logs
 measure_dict = results
 info_dict.update(measure_dict)
-filename = 'info_' + args.dataset + '.json'
-json.dump(info_dict, open(osp.join(log_dir, filename), 'w'))
+filename = "info_" + args.dataset + ".json"
+json.dump(info_dict, open(osp.join(log_dir, filename), "w"))

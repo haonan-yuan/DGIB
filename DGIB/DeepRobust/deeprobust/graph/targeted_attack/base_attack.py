@@ -3,9 +3,11 @@ import numpy as np
 import torch
 import scipy.sparse as sp
 
-class BaseAttack(Module):
 
-    def __init__(self, model, nnodes, attack_structure=True, attack_features=False, device='cpu'):
+class BaseAttack(Module):
+    def __init__(
+        self, model, nnodes, attack_structure=True, attack_features=False, device="cpu"
+    ):
         super(BaseAttack, self).__init__()
 
         self.surrogate = model
@@ -26,9 +28,9 @@ class BaseAttack(Module):
         pass
 
     def check_adj(self, adj):
-        '''
+        """
             check if the modified adjacency is symmetric and unweighted
-        '''
+        """
         if type(adj) is torch.Tensor:
             adj = adj.cpu().numpy()
         assert np.abs(adj - adj.T).sum() == 0, "Input graph is not symmetric"
@@ -38,4 +40,3 @@ class BaseAttack(Module):
         else:
             assert adj.max() == 1, "Max value should be 1!"
             assert adj.min() == 0, "Min value should be 0!"
-

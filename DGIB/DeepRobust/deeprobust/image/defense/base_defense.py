@@ -1,6 +1,7 @@
 from abc import ABCMeta
 import torch
 
+
 class BaseDefense(object):
 
     __metaclass__ = ABCMeta
@@ -15,13 +16,14 @@ class BaseDefense(object):
     def generate(self, train_loader, test_loader, **kwargs):
         self.train_loader = train_loader
         self.test_loader = test_loader
-        return 
-    
+        return
+
     def train(self, train_loader, optimizer, epoch):
         return True
 
     def test(self, test_loader):
         return True
+
     def adv_data(self, model, data, target, **kwargs):
         return True
 
@@ -30,6 +32,6 @@ class BaseDefense(object):
 
     def generate(self):
         return True
-    
+
     def save_model(self):
-        return True 
+        return True

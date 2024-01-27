@@ -8,12 +8,14 @@ tensorboard==1.15.0
 __author__ = "Michael Gygli"
 
 import tensorflow as tf
+
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO, BytesIO
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 class Logger(object):
     """Logging in tensorboard without tensorflow ops."""
@@ -32,8 +34,7 @@ class Logger(object):
         step : int
             training iteration
         """
-        summary = tf.Summary(value=[tf.Summary.Value(tag=tag,
-                                                     simple_value=value)])
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
         self.writer.add_summary(summary, step)
 
     def log_images(self, tag, images, step):
@@ -43,27 +44,29 @@ class Logger(object):
         for nr, img in enumerate(images):
             # Write the image to a string
             s = BytesIO()
-            plt.imsave(s, img, format='png')
+            plt.imsave(s, img, format="png")
 
             # Create an Image object
-            img_sum = tf.compat.v1.summary.Image(encoded_image_string=s.getvalue(),
-                                                 height=img.shape[0],
-                                                 width=img.shape[1])
+            img_sum = tf.compat.v1.summary.Image(
+                encoded_image_string=s.getvalue(),
+                height=img.shape[0],
+                width=img.shape[1],
+            )
             # Create a Summary value
-            im_summaries.append(tf.compat.v1.summary.Value(tag='%s/%d' % (tag, nr),
-                                                           image=img_sum))
+            im_summaries.append(
+                tf.compat.v1.summary.Value(tag="%s/%d" % (tag, nr), image=img_sum)
+            )
 
         # Create and write Summary
         summary = tf.compat.v1.summary(value=im_summaries)
         self.writer.add_summary(summary, step)
-        
 
     def log_histogram(self, tag, values, step, bins=1000):
         """Logs the histogram of a list/vector of values."""
         # Convert to a numpy array
         values = np.array(values)
-        
-        # Create histogram using numpy        
+
+        # Create histogram using numpy
         counts, bin_edges = np.histogram(values, bins=bins)
 
         # Fill fields of histogram proto
@@ -72,7 +75,7 @@ class Logger(object):
         hist.max = float(np.max(values))
         hist.num = int(np.prod(values.shape))
         hist.sum = float(np.sum(values))
-        hist.sum_squares = float(np.sum(values**2))
+        hist.sum_squares = float(np.sum(values ** 2))
 
         # Requires equal number as bins, where the first goes from -DBL_MAX to bin_edges[1]
         # See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/framework/summary.proto#L30
@@ -86,6 +89,8 @@ class Logger(object):
             hist.bucket.append(c)
 
         # Create and write Summary
-        summary = tf.compat.v1.summary(value=[tf.compat.v1.summary.Value(tag=tag, histo=hist)])
+        summary = tf.compat.v1.summary(
+            value=[tf.compat.v1.summary.Value(tag=tag, histo=hist)]
+        )
         self.writer.add_summary(summary, step)
         self.writer.flush()

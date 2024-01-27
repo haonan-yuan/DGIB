@@ -12,13 +12,14 @@ from deeprobust.graph.rl.env import NodeAttackEnv, GraphNormTool, StaticGraph
 from deeprobust.graph.utils import *
 from deeprobust.graph.data import Dataset
 from deeprobust.graph.black_box import *
+
 # from deeprobust.graph.rl.rl_s2v import Agent
 from deeprobust.graph.targeted_attack.rl_s2v import Agent
 from deeprobust.graph.rl.rl_s2v_config import args
 
 
 def init_setup():
-    data = Dataset(root='/tmp/', name=args.dataset, setting='gcn')
+    data = Dataset(root="/tmp/", name=args.dataset, setting="gcn")
 
     data.features = normalize_feature(data.features)
     adj, features, labels = data.adj, data.features, data.labels
@@ -27,20 +28,29 @@ def init_setup():
     dict_of_lists = nx.to_dict_of_lists(StaticGraph.graph)
 
     idx_train, idx_val, idx_test = data.idx_train, data.idx_val, data.idx_test
-    device = torch.device('cuda') if args.ctx == 'gpu' else 'cpu'
+    device = torch.device("cuda") if args.ctx == "gpu" else "cpu"
 
     # black box setting
-    adj, features, labels = preprocess(adj, features, labels, preprocess_adj=False, sparse=True, device=device)
+    adj, features, labels = preprocess(
+        adj, features, labels, preprocess_adj=False, sparse=True, device=device
+    )
     victim_model = load_victim_model(data, device=device, file_path=args.saved_model)
-    setattr(victim_model, 'norm_tool',  GraphNormTool(normalize=True, gm='gcn', device=device))
+    setattr(
+        victim_model,
+        "norm_tool",
+        GraphNormTool(normalize=True, gm="gcn", device=device),
+    )
     output = victim_model.predict(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
-    print("Test set results:",
-          "loss= {:.4f}".format(loss_test.item()),
-          "accuracy= {:.4f}".format(acc_test.item()))
+    print(
+        "Test set results:",
+        "loss= {:.4f}".format(loss_test.item()),
+        "accuracy= {:.4f}".format(acc_test.item()),
+    )
 
     return features, labels, idx_val, idx_test, victim_model, dict_of_lists, adj
+
 
 random.seed(args.seed)
 np.random.seed(args.seed)
@@ -75,22 +85,45 @@ for i in range(len(idx_valid)):
     else:
         num_wrong += 1
 
-print( 'meta list ratio:', len(meta_list) / float(len(idx_valid)))
+print("meta list ratio:", len(meta_list) / float(len(idx_valid)))
 
-device = torch.device('cuda') if args.ctx == 'gpu' else 'cpu'
+device = torch.device("cuda") if args.ctx == "gpu" else "cpu"
 
-env = NodeAttackEnv(features, labels, total, dict_of_lists, victim_model, num_mod=args.num_mod, reward_type=args.reward_type)
-agent = Agent(env, features, labels, meta_list, attack_list, dict_of_lists, num_wrong=num_wrong,
-        num_mod=args.num_mod, reward_type=args.reward_type,
-        batch_size=args.batch_size, save_dir=args.save_dir,
-        bilin_q=args.bilin_q, embed_dim=args.latent_dim,
-        mlp_hidden=args.mlp_hidden, max_lv=args.max_lv,
-        gm=args.gm, device=device)
+env = NodeAttackEnv(
+    features,
+    labels,
+    total,
+    dict_of_lists,
+    victim_model,
+    num_mod=args.num_mod,
+    reward_type=args.reward_type,
+)
+agent = Agent(
+    env,
+    features,
+    labels,
+    meta_list,
+    attack_list,
+    dict_of_lists,
+    num_wrong=num_wrong,
+    num_mod=args.num_mod,
+    reward_type=args.reward_type,
+    batch_size=args.batch_size,
+    save_dir=args.save_dir,
+    bilin_q=args.bilin_q,
+    embed_dim=args.latent_dim,
+    mlp_hidden=args.mlp_hidden,
+    max_lv=args.max_lv,
+    gm=args.gm,
+    device=device,
+)
 
-print('Warning: if you find the training process is too slow, you can uncomment line 119 in deeprobust/graph/utils.py. Note that you need to install torch_sparse')
+print(
+    "Warning: if you find the training process is too slow, you can uncomment line 119 in deeprobust/graph/utils.py. Note that you need to install torch_sparse"
+)
 
-if args.phase == 'train':
+if args.phase == "train":
     agent.train(num_steps=args.num_steps, lr=args.learning_rate)
 else:
-    agent.net.load_state_dict(torch.load(args.save_dir + '/epoch-best.model'))
+    agent.net.load_state_dict(torch.load(args.save_dir + "/epoch-best.model"))
     agent.eval(training=args.phase)

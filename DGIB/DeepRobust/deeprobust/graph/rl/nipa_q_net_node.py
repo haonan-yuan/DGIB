@@ -1,11 +1,11 @@
-'''
+"""
     Adversarial Attacks on Neural Networks for Graph Data. ICML 2018.
         https://arxiv.org/abs/1806.02371
     Author's Implementation
        https://github.com/Hanjun-Dai/graph_adversarial_attack
     This part of code is adopted from the author's implementation but modified
     to be integrated into the repository.
-'''
+"""
 
 import os
 import sys
@@ -20,14 +20,26 @@ import torch.optim as optim
 from tqdm import tqdm
 from deeprobust.graph.rl.env import GraphNormTool
 
-class QNetNode(nn.Module):
 
-    def __init__(self, node_features, node_labels, list_action_space, n_injected, bilin_q=1, embed_dim=64, mlp_hidden=64, max_lv=1, gm='mean_field', device='cpu'):
-        '''
+class QNetNode(nn.Module):
+    def __init__(
+        self,
+        node_features,
+        node_labels,
+        list_action_space,
+        n_injected,
+        bilin_q=1,
+        embed_dim=64,
+        mlp_hidden=64,
+        max_lv=1,
+        gm="mean_field",
+        device="cpu",
+    ):
+        """
         bilin_q: bilinear q or not
         mlp_hidden: mlp hidden layer size
         mav_lv: max rounds of message passing
-        '''
+        """
         super(QNetNode, self).__init__()
         self.node_features = node_features
         self.identity = torch.eye(node_labels.max() + 1).to(node_labels.device)
@@ -75,7 +87,9 @@ class QNetNode(nn.Module):
 
     def get_action_label_encoding(self, label):
         onehot = self.to_onehot(label)
-        zeros = torch.zeros((onehot.shape[0], self.embed_dim - onehot.shape[1])).to(onehot.device)
+        zeros = torch.zeros((onehot.shape[0], self.embed_dim - onehot.shape[1])).to(
+            onehot.device
+        )
         return torch.cat((onehot, zeros), dim=1)
 
     def get_graph_embedding(self, adj):
@@ -118,7 +132,9 @@ class QNetNode(nn.Module):
             for i in range(len(batch_graph)):
                 if batch_graph[i] is None:
                     continue
-                adj = self.norm_tool.norm_extra(batch_graph[i].get_extra_adj(self.device))
+                adj = self.norm_tool.norm_extra(
+                    batch_graph[i].get_extra_adj(self.device)
+                )
                 # get graph representation
                 graph_embed, node_embed = self.get_graph_embedding(adj)
 
@@ -137,7 +153,7 @@ class QNetNode(nn.Module):
                 embed_s_a = torch.cat((embed_s, action_embed), dim=1)
 
                 if self.mlp_hidden:
-                    embed_s_a = F.relu( self.linear_1(embed_s_a) )
+                    embed_s_a = F.relu(self.linear_1(embed_s_a))
 
                 raw_pred = self.linear_out(embed_s_a)
 
@@ -150,12 +166,24 @@ class QNetNode(nn.Module):
                 # list_pred.append(raw_pred)
                 preds[i] += raw_pred
 
-
         return greedy_actions, preds
 
-class NStepQNetNode(nn.Module):
 
-    def __init__(self, num_steps, node_features, node_labels, list_action_space, n_injected, bilin_q=1, embed_dim=64, mlp_hidden=64, max_lv=1, gm='mean_field', device='cpu'):
+class NStepQNetNode(nn.Module):
+    def __init__(
+        self,
+        num_steps,
+        node_features,
+        node_labels,
+        list_action_space,
+        n_injected,
+        bilin_q=1,
+        embed_dim=64,
+        mlp_hidden=64,
+        max_lv=1,
+        gm="mean_field",
+        device="cpu",
+    ):
 
         super(NStepQNetNode, self).__init__()
         self.node_features = node_features
@@ -166,12 +194,25 @@ class NStepQNetNode(nn.Module):
         list_mod = []
         for i in range(0, num_steps):
             # list_mod.append(QNetNode(node_features, node_labels, list_action_space))
-            list_mod.append(QNetNode(node_features, node_labels, list_action_space, n_injected, bilin_q, embed_dim, mlp_hidden, max_lv, gm=gm, device=device))
+            list_mod.append(
+                QNetNode(
+                    node_features,
+                    node_labels,
+                    list_action_space,
+                    n_injected,
+                    bilin_q,
+                    embed_dim,
+                    mlp_hidden,
+                    max_lv,
+                    gm=gm,
+                    device=device,
+                )
+            )
 
         self.list_mod = nn.ModuleList(list_mod)
         self.num_steps = num_steps
 
-    def forward(self, time_t, states, actions, greedy_acts = False, is_inference=False):
+    def forward(self, time_t, states, actions, greedy_acts=False, is_inference=False):
         # print('time_t:', time_t)
         # print('self.num_step:', self.num_steps)
         # assert time_t >= 0 and time_t < self.num_steps
@@ -201,6 +242,7 @@ def _param_init(m):
         m.bias.data.zero_()
         glorot_uniform(m.weight.data)
 
+
 def weights_init(m):
     for p in m.modules():
         if isinstance(p, nn.ParameterList):
@@ -210,8 +252,9 @@ def weights_init(m):
             _param_init(p)
 
     for name, p in m.named_parameters():
-        if not '.' in name: # top-level parameters
+        if not "." in name:  # top-level parameters
             _param_init(p)
+
 
 def node_greedy_actions(target_nodes, picked_nodes, list_q, net):
     assert len(target_nodes) == len(list_q)
@@ -238,5 +281,3 @@ def node_greedy_actions(target_nodes, picked_nodes, list_q, net):
             actions.append(act)
 
     return torch.cat(actions, dim=0).data, torch.cat(values, dim=0).data
-
-

@@ -32,24 +32,47 @@ def ones(tensor):
     if tensor is not None:
         tensor.data.fill_(1)
 
+
 def prepare(data, t, detection=False):
     if detection == False:
         # obtain adj index
-        edge_index = data['edge_index_list'][t].long().to(args.device)  # torch edge index
-        pos_index = data['pedges'][t].long().to(args.device)  # torch edge index
-        neg_index = data['nedges'][t].long().to(args.device)  # torch edge index
+        edge_index = (
+            data["edge_index_list"][t].long().to(args.device)
+        )  # torch edge index
+        pos_index = data["pedges"][t].long().to(args.device)  # torch edge index
+        neg_index = data["nedges"][t].long().to(args.device)  # torch edge index
         new_pos_index = 0
         new_neg_index = 0
         nodes = list(np.union1d(pos_index.cpu().numpy(), neg_index.cpu().numpy()))
         weights = None
-        return edge_index, pos_index, neg_index, nodes, weights, new_pos_index, new_neg_index
+        return (
+            edge_index,
+            pos_index,
+            neg_index,
+            nodes,
+            weights,
+            new_pos_index,
+            new_neg_index,
+        )
 
     if detection == True:
-        train_pos_edge_index = data['gdata'][t].train_pos_edge_index.long().to(args.device)
+        train_pos_edge_index = (
+            data["gdata"][t].train_pos_edge_index.long().to(args.device)
+        )
 
-        val_pos_edge_index = data['gdata'][t].val_pos_edge_index.long().to(args.device)
-        val_neg_edge_index = data['gdata'][t].val_neg_edge_index.long().to(args.device)
+        val_pos_edge_index = data["gdata"][t].val_pos_edge_index.long().to(args.device)
+        val_neg_edge_index = data["gdata"][t].val_neg_edge_index.long().to(args.device)
 
-        test_pos_edge_index = data['gdata'][t].test_pos_edge_index.long().to(args.device)
-        test_neg_edge_index = data['gdata'][t].test_neg_edge_index.long().to(args.device)
-        return train_pos_edge_index, val_pos_edge_index, val_neg_edge_index, test_pos_edge_index, test_neg_edge_index
+        test_pos_edge_index = (
+            data["gdata"][t].test_pos_edge_index.long().to(args.device)
+        )
+        test_neg_edge_index = (
+            data["gdata"][t].test_neg_edge_index.long().to(args.device)
+        )
+        return (
+            train_pos_edge_index,
+            val_pos_edge_index,
+            val_neg_edge_index,
+            test_pos_edge_index,
+            test_neg_edge_index,
+        )

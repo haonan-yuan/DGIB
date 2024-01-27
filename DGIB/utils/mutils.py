@@ -1,6 +1,8 @@
-import random 
+import random
 import numpy as np
 import torch
+
+
 def seed_everything(seed: int):
     r"""Sets the seed for generating random numbers in PyTorch, numpy and
     Python.
@@ -13,20 +15,22 @@ def seed_everything(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
+
 import shutil
 from torch.utils.tensorboard import SummaryWriter
 import json
 import os.path as osp
 
+
 def get_arg_dict(args):
-    info_dict=args.__dict__
-    ks=list(info_dict.keys())
-    arg_dict={}
+    info_dict = args.__dict__
+    ks = list(info_dict.keys())
+    arg_dict = {}
     for k in ks:
-        v=info_dict[k]
-        for t in [int,float,str,bool,torch.Tensor]:
-            if isinstance(v,t):
-                arg_dict[k]=v
+        v = info_dict[k]
+        for t in [int, float, str, bool, torch.Tensor]:
+            if isinstance(v, t):
+                arg_dict[k] = v
                 break
     return arg_dict
 
@@ -34,6 +38,7 @@ def get_arg_dict(args):
 class EarlyStopping:
     """ EarlyStopping class to keep NN from overfitting. copied from nni
     """
+
     def __init__(self, mode="min", min_delta=0, patience=10, percentage=False):
         self.mode = mode
         self.min_delta = min_delta
@@ -70,9 +75,9 @@ class EarlyStopping:
             return True
 
         return False
-        
+
     def reset(self):
-        self.best=None
+        self.best = None
 
     def _init_is_better(self, mode, min_delta, percentage):
         if mode not in {"min", "max"}:
@@ -88,16 +93,19 @@ class EarlyStopping:
             if mode == "max":
                 self.is_better = lambda a, best: a > best + (best * min_delta / 100)
 
+
 def is_empty_edges(edges):
-    return edges.shape[1]==0
+    return edges.shape[1] == 0
+
 
 def map2id(l):
-    '''encode list (unique) starting from 0.
+    """encode list (unique) starting from 0.
     @return : mapping dict from l -> int.
-    '''
+    """
     return dict(zip(l, range(len(l))))
 
-def sorteddict(x, min=True,dim=1):
+
+def sorteddict(x, min=True, dim=1):
     """return dict sorted by values
     @params x: a dict
     @params min : whether from small to large. 
@@ -135,7 +143,9 @@ def sorteddict(x, min=True,dim=1):
 
 
 from torch_geometric.utils.negative_sampling import negative_sampling
-def hard_negative_sampling(edges,all_neg=False,inplace=False):
+
+
+def hard_negative_sampling(edges, all_neg=False, inplace=False):
     ei = edges.numpy()
 
     # reorder
@@ -145,32 +155,33 @@ def hard_negative_sampling(edges,all_neg=False,inplace=False):
     n2id = dict(zip(nodes, np.arange(len(nodes))))
 
     ei_ = np.vectorize(lambda x: n2id[x])(ei)
-    
+
     if all_neg:
         maxn = len(nodes)
         nei_ = []
         pos_e = set([tuple(x) for x in ei_.T])
         for i in range(maxn):
             for j in range(maxn):
-                if i!=j and (i,j) not in pos_e:
-                    nei_.append([i,j])
+                if i != j and (i, j) not in pos_e:
+                    nei_.append([i, j])
         nei_ = torch.LongTensor(nei_).T
     else:
         nei_ = negative_sampling(torch.LongTensor(ei_))
     nei = torch.LongTensor(np.vectorize(lambda x: id2n[x])(nei_.numpy()))
     return nei
 
-def bi_negative_sampling(edges,num_nodes,shift):
-    nes = edges.new_zeros((2,0))
-    while nes.shape[1]<edges.shape[1]:
-        num_need=edges.shape[1]-nes.shape[1]
-        ne = negative_sampling(edges,num_nodes=num_nodes,num_neg_samples=4*num_need)
-        mask = torch.logical_xor((ne[0]<shift), (ne[1]<shift))
-        ne=ne[:,mask]
-        nes=torch.cat([nes,ne[:,:num_need]],dim=-1)
+
+def bi_negative_sampling(edges, num_nodes, shift):
+    nes = edges.new_zeros((2, 0))
+    while nes.shape[1] < edges.shape[1]:
+        num_need = edges.shape[1] - nes.shape[1]
+        ne = negative_sampling(edges, num_nodes=num_nodes, num_neg_samples=4 * num_need)
+        mask = torch.logical_xor((ne[0] < shift), (ne[1] < shift))
+        ne = ne[:, mask]
+        nes = torch.cat([nes, ne[:, :num_need]], dim=-1)
     return nes
 
-import os,sys
-CUR_DIR= os.path.dirname(os.path.abspath(__file__))
 
-    
+import os, sys
+
+CUR_DIR = os.path.dirname(os.path.abspath(__file__))

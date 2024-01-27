@@ -1,9 +1,9 @@
-'''
+"""
     Topology Attack and Defense for Graph Neural Networks: An Optimization Perspective
         https://arxiv.org/pdf/1906.04214.pdf
     Tensorflow Implementation:
         https://github.com/KaidiXu/GCN_ADV_Train
-'''
+"""
 
 import torch
 import torch.multiprocessing as mp
@@ -22,39 +22,60 @@ from tqdm import tqdm
 import math
 import scipy.sparse as sp
 
+
 class IGAttack(BaseAttack):
+    def __init__(
+        self,
+        model=None,
+        nnodes=None,
+        feature_shape=None,
+        attack_structure=True,
+        attack_features=False,
+        device="cpu",
+    ):
 
-    def __init__(self, model=None, nnodes=None, feature_shape=None, attack_structure=True, attack_features=False, device='cpu'):
+        super(IGAttack, self).__init__(
+            model, nnodes, attack_structure, attack_features, device
+        )
 
-        super(IGAttack, self).__init__(model, nnodes, attack_structure, attack_features, device)
-
-        assert attack_features or attack_structure, 'attack_features or attack_structure cannot be both False'
+        assert (
+            attack_features or attack_structure
+        ), "attack_features or attack_structure cannot be both False"
 
         self.modified_adj = None
         self.modified_features = None
 
         if attack_structure:
-            assert nnodes is not None, 'Please give nnodes='
-            self.adj_changes = Parameter(torch.FloatTensor(int(nnodes*(nnodes-1)/2)))
+            assert nnodes is not None, "Please give nnodes="
+            self.adj_changes = Parameter(
+                torch.FloatTensor(int(nnodes * (nnodes - 1) / 2))
+            )
             self.adj_changes.data.fill_(0)
 
         if attack_features:
-            assert feature_shape is not None, 'Please give feature_shape='
+            assert feature_shape is not None, "Please give feature_shape="
             self.feature_changes = Parameter(torch.FloatTensor(feature_shape))
             self.feature_changes.data.fill_(0)
 
     def attack(self, ori_features, ori_adj, labels, idx_train, perturbations):
         victim_model = self.surrogate
         self.sparse_features = sp.issparse(ori_features)
-        ori_adj, ori_features, labels = utils.to_tensor(ori_adj, ori_features, labels, device=self.device)
+        ori_adj, ori_features, labels = utils.to_tensor(
+            ori_adj, ori_features, labels, device=self.device
+        )
 
         victim_model.eval()
 
         adj_norm = utils.normalize_adj_tensor(ori_adj)
-        s_e = self.calc_importance_edge(ori_features, adj_norm, labels, idx_train, steps=20)
-        s_f = self.calc_importance_feature(ori_features, adj_norm, labels, idx_train, steps=20)
+        s_e = self.calc_importance_edge(
+            ori_features, adj_norm, labels, idx_train, steps=20
+        )
+        s_f = self.calc_importance_feature(
+            ori_features, adj_norm, labels, idx_train, steps=20
+        )
 
         import ipdb
+
         ipdb.set_trace()
 
         for t in tqdm(range(perturbations)):
@@ -68,11 +89,16 @@ class IGAttack(BaseAttack):
         adj_norm.requires_grad = True
         integrated_grad_list = []
         for i in tqdm(range(adj.shape[0])):
-            for j in (range(adj.shape[1])):
+            for j in range(adj.shape[1]):
                 if adj_norm[i][j]:
-                    scaled_inputs = [(float(k)/ steps) * (adj_norm - 0) for k in range(0, steps + 1)]
+                    scaled_inputs = [
+                        (float(k) / steps) * (adj_norm - 0) for k in range(0, steps + 1)
+                    ]
                 else:
-                    scaled_inputs = [-(float(k)/ steps) * (1 - adj_norm) for k in range(0, steps + 1)]
+                    scaled_inputs = [
+                        -(float(k) / steps) * (1 - adj_norm)
+                        for k in range(0, steps + 1)
+                    ]
                 _sum = 0
 
                 # num_processes = steps
@@ -116,16 +142,23 @@ class IGAttack(BaseAttack):
         for i in range(features.shape[0]):
             for j in range(features.shape[1]):
                 if features[i][j]:
-                    scaled_inputs = [(float(k)/ steps) * (features - 0) for k in range(0, steps + 1)]
+                    scaled_inputs = [
+                        (float(k) / steps) * (features - 0) for k in range(0, steps + 1)
+                    ]
                 else:
-                    scaled_inputs = [-(float(k)/ steps) * (1 - features) for k in range(0, steps + 1)]
+                    scaled_inputs = [
+                        -(float(k) / steps) * (1 - features)
+                        for k in range(0, steps + 1)
+                    ]
                 _sum = 0
 
                 for new_features in scaled_inputs:
                     output = self.surrogate(new_features, adj_norm)
                     loss = F.nll_loss(output[idx_train], labels[idx_train])
                     # adj_grad = torch.autograd.grad(loss, adj[i][j], allow_unused=True)[0]
-                    feature_grad = torch.autograd.grad(loss, features, allow_unused=True)[0]
+                    feature_grad = torch.autograd.grad(
+                        loss, features, allow_unused=True
+                    )[0]
                     feature_grad = feature_grad[i][j]
                     _sum += feature_grad
 
@@ -153,12 +186,15 @@ class IGAttack(BaseAttack):
         return adj_grad.mean()
 
     def get_modified_adj(self, ori_adj):
-        adj_changes_square = self.adj_changes - torch.diag(torch.diag(self.adj_changes, 0))
+        adj_changes_square = self.adj_changes - torch.diag(
+            torch.diag(self.adj_changes, 0)
+        )
         ind = np.diag_indices(self.adj_changes.shape[0])
-        adj_changes_symm = torch.clamp(adj_changes_square + torch.transpose(adj_changes_square, 1, 0), -1, 1)
+        adj_changes_symm = torch.clamp(
+            adj_changes_square + torch.transpose(adj_changes_square, 1, 0), -1, 1
+        )
         modified_adj = adj_changes_symm + ori_adj
         return modified_adj
 
     def get_modified_features(self, ori_features):
         return ori_features + self.feature_changes
-

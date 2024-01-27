@@ -1,8 +1,8 @@
-'''
+"""
     FGA: Fast Gradient Attack on Network Embedding (https://arxiv.org/pdf/1809.02797.pdf)
     Similary to FGA, FGSM is mentioned in Zugner's paper,
     Adversarial Attacks on Neural Networks for Graph Data, KDD'19
-'''
+"""
 
 import torch
 from DGIB.DeepRobust.deeprobust.graph.targeted_attack import BaseAttack
@@ -12,11 +12,25 @@ from DGIB.DeepRobust.deeprobust.graph import utils
 import torch.nn.functional as F
 import scipy.sparse as sp
 
+
 class FGA(BaseAttack):
+    def __init__(
+        self,
+        model,
+        nnodes,
+        feature_shape=None,
+        attack_structure=True,
+        attack_features=False,
+        device="cpu",
+    ):
 
-    def __init__(self, model, nnodes, feature_shape=None, attack_structure=True, attack_features=False, device='cpu'):
-
-        super(FGA, self).__init__(model, nnodes, attack_structure=attack_structure, attack_features=attack_features, device=device)
+        super(FGA, self).__init__(
+            model,
+            nnodes,
+            attack_structure=attack_structure,
+            attack_features=attack_features,
+            device=device,
+        )
 
         if self.attack_structure:
             self.adj_changes = Parameter(torch.FloatTensor(nnodes))
@@ -33,10 +47,12 @@ class FGA(BaseAttack):
 
         modified_adj = adj.todense()
         features = features.todense()
-        modified_adj, features, labels = utils.to_tensor(modified_adj, features, labels, device=self.device)
+        modified_adj, features, labels = utils.to_tensor(
+            modified_adj, features, labels, device=self.device
+        )
 
         self.surrogate.eval()
-        print('number of pertubations: %s' % n_perturbations)
+        print("number of pertubations: %s" % n_perturbations)
         for i in range(n_perturbations):
             modified_row = modified_adj[target_node] + self.adj_changes
             modified_adj[target_node] = modified_row
@@ -47,11 +63,11 @@ class FGA(BaseAttack):
                 loss = F.nll_loss(output[idx_train], labels[idx_train])
                 # acc_train = accuracy(output[idx_train], labels[idx_train])
                 grad = torch.autograd.grad(loss, self.adj_changes, retain_graph=True)[0]
-                grad = grad * (-2*modified_row + 1)
+                grad = grad * (-2 * modified_row + 1)
                 grad[target_node] = 0
                 grad_argmax = torch.argmax(grad)
 
-            value = -2*modified_row[grad_argmax] + 1
+            value = -2 * modified_row[grad_argmax] + 1
             modified_adj.data[target_node][grad_argmax] += value
             modified_adj.data[grad_argmax][target_node] += value
 
@@ -63,4 +79,3 @@ class FGA(BaseAttack):
         self.check_adj(modified_adj)
         self.modified_adj = modified_adj
         # self.features = features
-

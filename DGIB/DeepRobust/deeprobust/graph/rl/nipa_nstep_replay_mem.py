@@ -1,7 +1,7 @@
-'''
+"""
     This part of code is adopted from https://github.com/Hanjun-Dai/graph_adversarial_attack
     but modified to be integrated into the repository.
-'''
+"""
 
 import random
 import numpy as np
@@ -24,7 +24,7 @@ def nipa_hash_state_action(s_t, a_t):
 
 
 class NstepReplayMem(object):
-    def __init__(self, memory_size, n_steps, balance_sample = False):
+    def __init__(self, memory_size, n_steps, balance_sample=False):
         self.mem_cells = []
         for i in range(n_steps - 1):
             self.mem_cells.append(NstepReplayMemCell(memory_size, False))
@@ -49,8 +49,10 @@ class NstepReplayMem(object):
                 sp = list_sp[i]
             self.add(list_st[i], list_at[i], list_rt[i], sp, list_term[i], t)
 
-    def sample(self, batch_size, t = None):
+    def sample(self, batch_size, t=None):
         if t is None:
             t = np.random.randint(self.n_steps)
-        list_st, list_at, list_rt, list_s_primes, list_term = self.mem_cells[t].sample(batch_size)
+        list_st, list_at, list_rt, list_s_primes, list_term = self.mem_cells[t].sample(
+            batch_size
+        )
         return t, list_st, list_at, list_rt, list_s_primes, list_term

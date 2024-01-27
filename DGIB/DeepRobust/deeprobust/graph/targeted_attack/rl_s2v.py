@@ -15,12 +15,28 @@ from deeprobust.graph.rl.q_net_node import QNetNode, NStepQNetNode, node_greedy_
 from deeprobust.graph.rl.env import NodeAttackEnv
 from deeprobust.graph.rl.nstep_replay_mem import NstepReplayMem
 
-class Agent(object):
 
-    def __init__(self, env, features, labels, idx_meta, idx_test,
-            list_action_space, num_mod, reward_type, batch_size=10,
-            num_wrong=0, bilin_q=1, embed_dim=64, gm='mean_field',
-            mlp_hidden=64, max_lv=1, save_dir='checkpoint_dqn', device=None):
+class Agent(object):
+    def __init__(
+        self,
+        env,
+        features,
+        labels,
+        idx_meta,
+        idx_test,
+        list_action_space,
+        num_mod,
+        reward_type,
+        batch_size=10,
+        num_wrong=0,
+        bilin_q=1,
+        embed_dim=64,
+        gm="mean_field",
+        mlp_hidden=64,
+        max_lv=1,
+        save_dir="checkpoint_dqn",
+        device=None,
+    ):
 
         assert device is not None, "'device' cannot be None, please specify it"
 
@@ -35,23 +51,45 @@ class Agent(object):
         self.batch_size = batch_size
         self.save_dir = save_dir
         if not osp.exists(save_dir):
-            os.system('mkdir -p {}'.format(save_dir))
+            os.system("mkdir -p {}".format(save_dir))
 
         self.gm = gm
         self.device = device
 
-        self.mem_pool = NstepReplayMem(memory_size=500000, n_steps=2 * num_mod, balance_sample=reward_type == 'binary')
+        self.mem_pool = NstepReplayMem(
+            memory_size=500000,
+            n_steps=2 * num_mod,
+            balance_sample=reward_type == "binary",
+        )
         self.env = env
 
         # self.net = QNetNode(features, labels, list_action_space)
         # self.old_net = QNetNode(features, labels, list_action_space)
-        self.net = NStepQNetNode(2 * num_mod, features, labels, list_action_space,
-                          bilin_q=bilin_q, embed_dim=embed_dim, mlp_hidden=mlp_hidden,
-                          max_lv=max_lv, gm=gm, device=device)
+        self.net = NStepQNetNode(
+            2 * num_mod,
+            features,
+            labels,
+            list_action_space,
+            bilin_q=bilin_q,
+            embed_dim=embed_dim,
+            mlp_hidden=mlp_hidden,
+            max_lv=max_lv,
+            gm=gm,
+            device=device,
+        )
 
-        self.old_net = NStepQNetNode(2 * num_mod, features, labels, list_action_space,
-                          bilin_q=bilin_q, embed_dim=embed_dim, mlp_hidden=mlp_hidden,
-                          max_lv=max_lv, gm=gm, device=device)
+        self.old_net = NStepQNetNode(
+            2 * num_mod,
+            features,
+            labels,
+            list_action_space,
+            bilin_q=bilin_q,
+            embed_dim=embed_dim,
+            mlp_hidden=mlp_hidden,
+            max_lv=max_lv,
+            gm=gm,
+            device=device,
+        )
 
         self.net = self.net.to(device)
         self.old_net = self.old_net.to(device)
@@ -69,14 +107,20 @@ class Agent(object):
         self.old_net.load_state_dict(self.net.state_dict())
 
     def make_actions(self, time_t, greedy=False):
-        self.eps = self.eps_end + max(0., (self.eps_start - self.eps_end)
-                * (self.eps_step - max(0., self.step)) / self.eps_step)
+        self.eps = self.eps_end + max(
+            0.0,
+            (self.eps_start - self.eps_end)
+            * (self.eps_step - max(0.0, self.step))
+            / self.eps_step,
+        )
 
         if random.random() < self.eps and not greedy:
             actions = self.env.uniformRandActions()
         else:
             cur_state = self.env.getStateRef()
-            actions, values = self.net(time_t, cur_state, None, greedy_acts=True, is_inference=True)
+            actions, values = self.net(
+                time_t, cur_state, None, greedy_acts=True, is_inference=True
+            )
             actions = list(actions.cpu().numpy())
 
         return actions
@@ -87,7 +131,9 @@ class Agent(object):
             self.pos = 0
             random.shuffle(self.idx_test)
 
-        selected_idx = self.idx_test[self.pos * self.batch_size : (self.pos + 1) * self.batch_size]
+        selected_idx = self.idx_test[
+            self.pos * self.batch_size : (self.pos + 1) * self.batch_size
+        ]
         self.pos += 1
         self.env.setup(selected_idx)
 
@@ -111,13 +157,15 @@ class Agent(object):
                 rewards = np.zeros(len(list_at), dtype=np.float32)
                 s_prime = self.env.cloneState()
 
-            self.mem_pool.add_list(list_st, list_at, rewards, s_prime, [env.isTerminal()] * len(list_at), t)
-            list_of_list_st.append( deepcopy(list_st) )
-            list_of_list_at.append( deepcopy(list_at) )
+            self.mem_pool.add_list(
+                list_st, list_at, rewards, s_prime, [env.isTerminal()] * len(list_at), t
+            )
+            list_of_list_st.append(deepcopy(list_st))
+            list_of_list_at.append(deepcopy(list_at))
             t += 1
 
         # if the reward type is nll_loss, directly return
-        if self.reward_type == 'nll':
+        if self.reward_type == "nll":
             return
 
         T = t
@@ -127,8 +175,11 @@ class Agent(object):
                 sample_idx, target = c
                 doable = True
                 for t in range(T):
-                    if self.list_action_space[target] is not None and (not list_of_list_at[t][sample_idx] in self.list_action_space[target]):
-                        doable = False # TODO WHY False? This is only 1-hop neighbour
+                    if self.list_action_space[target] is not None and (
+                        not list_of_list_at[t][sample_idx]
+                        in self.list_action_space[target]
+                    ):
+                        doable = False  # TODO WHY False? This is only 1-hop neighbour
                         break
                 if not doable:
                     continue
@@ -159,28 +210,32 @@ class Agent(object):
 
         acc = 1 - (self.env.binary_rewards + 1.0) / 2.0
         acc = np.sum(acc) / (len(self.idx_meta) + self.num_wrong)
-        print('\033[93m average test: acc %.5f\033[0m' % (acc))
+        print("\033[93m average test: acc %.5f\033[0m" % (acc))
 
         if training == True and self.best_eval is None or acc < self.best_eval:
-            print('----saving to best attacker since this is the best attack rate so far.----')
-            torch.save(self.net.state_dict(), osp.join(self.save_dir, 'epoch-best.model'))
-            with open(osp.join(self.save_dir, 'epoch-best.txt'), 'w') as f:
-                f.write('%.4f\n' % acc)
-            with open(osp.join(self.save_dir, 'attack_solution.txt'), 'w') as f:
+            print(
+                "----saving to best attacker since this is the best attack rate so far.----"
+            )
+            torch.save(
+                self.net.state_dict(), osp.join(self.save_dir, "epoch-best.model")
+            )
+            with open(osp.join(self.save_dir, "epoch-best.txt"), "w") as f:
+                f.write("%.4f\n" % acc)
+            with open(osp.join(self.save_dir, "attack_solution.txt"), "w") as f:
                 for i in range(len(self.idx_meta)):
-                    f.write('%d: [' % self.idx_meta[i])
+                    f.write("%d: [" % self.idx_meta[i])
                     for e in self.env.modified_list[i].directed_edges:
-                        f.write('(%d %d)' % e)
-                    f.write('] succ: %d\n' % (self.env.binary_rewards[i]))
+                        f.write("(%d %d)" % e)
+                    f.write("] succ: %d\n" % (self.env.binary_rewards[i]))
             self.best_eval = acc
 
     def train(self, num_steps=100000, lr=0.001):
-        pbar = tqdm(range(self.burn_in), unit='batch')
+        pbar = tqdm(range(self.burn_in), unit="batch")
 
         for p in pbar:
             self.run_simulation()
 
-        pbar = tqdm(range(num_steps), unit='steps')
+        pbar = tqdm(range(num_steps), unit="steps")
         optimizer = optim.Adam(self.net.parameters(), lr=lr)
 
         for self.step in pbar:
@@ -193,13 +248,22 @@ class Agent(object):
             if self.step % 500 == 0:
                 self.eval()
 
-            cur_time, list_st, list_at, list_rt, list_s_primes, list_term = self.mem_pool.sample(batch_size=self.batch_size)
+            (
+                cur_time,
+                list_st,
+                list_at,
+                list_rt,
+                list_s_primes,
+                list_term,
+            ) = self.mem_pool.sample(batch_size=self.batch_size)
             list_target = torch.Tensor(list_rt).to(self.device)
 
             if not list_term[0]:
                 target_nodes, _, picked_nodes = zip(*list_s_primes)
                 _, q_t_plus_1 = self.old_net(cur_time + 1, list_s_primes, None)
-                _, q_rhs = node_greedy_actions(target_nodes, picked_nodes, q_t_plus_1, self.old_net)
+                _, q_rhs = node_greedy_actions(
+                    target_nodes, picked_nodes, q_t_plus_1, self.old_net
+                )
                 list_target += q_rhs
 
             # list_target = Variable(list_target.view(-1, 1))
@@ -210,6 +274,8 @@ class Agent(object):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            pbar.set_description('eps: %.5f, loss: %0.5f, q_val: %.5f' % (self.eps, loss, torch.mean(q_sa)) )
+            pbar.set_description(
+                "eps: %.5f, loss: %0.5f, q_val: %.5f"
+                % (self.eps, loss, torch.mean(q_sa))
+            )
             # print('eps: %.5f, loss: %0.5f, q_val: %.5f' % (self.eps, loss, torch.mean(q_sa)) )
-

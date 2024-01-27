@@ -5,14 +5,24 @@ import torch.nn.functional as F
 
 
 class CarliniL2:
-    def __init__(self, model, device): 
+    def __init__(self, model, device):
         self.model = model
         self.device = device
 
-    def parse_params(self, gan, confidence=0, targeted=False, learning_rate=1e-1,
-                 binary_search_steps=5, max_iterations=10000, abort_early=False, initial_const=1,
-                 clip_min=0, clip_max=1):
-        
+    def parse_params(
+        self,
+        gan,
+        confidence=0,
+        targeted=False,
+        learning_rate=1e-1,
+        binary_search_steps=5,
+        max_iterations=10000,
+        abort_early=False,
+        initial_const=1,
+        clip_min=0,
+        clip_max=1,
+    ):
+
         self.TARGETED = targeted
         self.LEARNING_RATE = learning_rate
         self.MAX_ITERATIONS = max_iterations
@@ -38,7 +48,7 @@ class CarliniL2:
         else:
             preds = F.softmax(self.model(x))
             preds_max = torch.max(preds, 1, keepdim=True)[0]
-            original_predictions = (preds == preds_max)
+            original_predictions = preds == preds_max
             labels = original_predictions
             del preds
         return labels.float()
@@ -59,7 +69,8 @@ class CarliniL2:
         labs = self.get_or_guess_labels(imgs, y)
 
         def compare(x, y):
-            if self.TARGETED is None: return True
+            if self.TARGETED is None:
+                return True
 
             if sum(x.shape) != 0:
                 x = x.clone()
@@ -92,7 +103,7 @@ class CarliniL2:
         for outer_step in range(self.BINARY_SEARCH_STEPS):
             # completely reset adam's internal state.
             modifier = nn.Parameter(start)
-            optimizer = torch.optim.Adam([modifier, ], lr=self.learning_rate)
+            optimizer = torch.optim.Adam([modifier,], lr=self.learning_rate)
 
             bestl2 = [1e10] * batch_size
             bestscore = -1 * torch.ones(batch_size, dtype=torch.float32).to(self.device)
@@ -119,10 +130,14 @@ class CarliniL2:
 
                 if self.TARGETED:
                     # if targeted, optimize for making the other class most likely
-                    loss1 = torch.max(torch.zeros_like(other), other - real + self.CONFIDENCE)
+                    loss1 = torch.max(
+                        torch.zeros_like(other), other - real + self.CONFIDENCE
+                    )
                 else:
                     # if untargeted, optimize for making this class least likely.
-                    loss1 = torch.max(torch.zeros_like(other), real - other + self.CONFIDENCE)
+                    loss1 = torch.max(
+                        torch.zeros_like(other), real - other + self.CONFIDENCE
+                    )
 
                 # sum up the losses
                 loss1 = torch.sum(CONST * loss1)
@@ -134,7 +149,7 @@ class CarliniL2:
 
                 # check if we should abort search if we're getting nowhere.
                 if self.ABORT_EARLY and i % ((self.MAX_ITERATIONS // 10) or 1) == 0:
-                    if loss > prev * .9999:
+                    if loss > prev * 0.9999:
                         # print('Stop early')
                         break
                     prev = loss
@@ -154,8 +169,10 @@ class CarliniL2:
 
             # adjust the constant as needed
             for e in range(batch_size):
-                if compare(bestscore[e], torch.argmax(tlabs[e]).float()) and \
-                        bestscore[e] != -1:
+                if (
+                    compare(bestscore[e], torch.argmax(tlabs[e]).float())
+                    and bestscore[e] != -1
+                ):
                     # success, divide CONST by two
                     upper_bound[e] = min(upper_bound[e], CONST[e])
                     if upper_bound[e] < 1e9:

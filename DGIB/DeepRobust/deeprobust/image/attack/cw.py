@@ -18,40 +18,43 @@ from deeprobust.image.attack.base_attack import BaseAttack
 from deeprobust.image.utils import onehot_like
 from deeprobust.image.optimizer import AdamOptimizer
 
-class CarliniWagner(BaseAttack):
 
-    def __init__(self, model, device = 'cuda'):
+class CarliniWagner(BaseAttack):
+    def __init__(self, model, device="cuda"):
         super(CarliniWagner, self).__init__(model, device)
         self.model = model
         self.device = device
-    
+
     def generate(self, image, label, target_label, **kwargs):
         assert self.check_type_device(image, label)
         assert self.parse_params(**kwargs)
         self.target = target_label
-        return self.cw(self.model, 
-                  self.image, 
-                  self.label,
-                  self.target,
-                  self.confidence,
-                  self.clip_min,
-                  self.clip_min,
-                  self.max_iterations,
-                  self.initial_const,
-                  self.binary_search_steps,
-                  self.learning_rate
-                  )
+        return self.cw(
+            self.model,
+            self.image,
+            self.label,
+            self.target,
+            self.confidence,
+            self.clip_min,
+            self.clip_min,
+            self.max_iterations,
+            self.initial_const,
+            self.binary_search_steps,
+            self.learning_rate,
+        )
 
-    def parse_params(self,
-                     classnum = 10,
-                     confidence = 1e-4, 
-                     clip_max = 1, 
-                     clip_min = 0, 
-                     max_iterations = 1000, 
-                     initial_const = 1e-2, 
-                     binary_search_steps = 5, 
-                     learning_rate = 0.00001, 
-                     abort_early = True):
+    def parse_params(
+        self,
+        classnum=10,
+        confidence=1e-4,
+        clip_max=1,
+        clip_min=0,
+        max_iterations=1000,
+        initial_const=1e-2,
+        binary_search_steps=5,
+        learning_rate=0.00001,
+        abort_early=True,
+    ):
 
         self.classnum = classnum
         self.confidence = confidence
@@ -64,7 +67,20 @@ class CarliniWagner(BaseAttack):
         self.abort_early = abort_early
         return True
 
-    def cw(self, model, image, label, target, confidence, clip_max, clip_min, max_iterations, initial_const, binary_search_steps, learning_rate):
+    def cw(
+        self,
+        model,
+        image,
+        label,
+        target,
+        confidence,
+        clip_max,
+        clip_min,
+        max_iterations,
+        initial_const,
+        binary_search_steps,
+        learning_rate,
+    ):
         """
         parameters:
         :param model: the target model to attack
@@ -78,12 +94,12 @@ class CarliniWagner(BaseAttack):
         :param binary_search_steps:
         :param learning_rate:
         """
-        #change the input image
+        # change the input image
         img_tanh = self.to_attack_space(image.cpu())
-        img_ori ,_ = self.to_model_space(img_tanh)
+        img_ori, _ = self.to_model_space(img_tanh)
         img_ori = img_ori.to(self.device)
 
-        #binary search initialization
+        # binary search initialization
         c = initial_const
         c_low = 0
         c_high = np.inf
@@ -92,11 +108,11 @@ class CarliniWagner(BaseAttack):
 
         for step in range(binary_search_steps):
 
-            #initialize w : perturbed image in tanh space
+            # initialize w : perturbed image in tanh space
             w = torch.from_numpy(img_tanh.numpy())
 
             optimizer = AdamOptimizer(img_tanh.shape)
-            
+
             is_adversarial = False
 
             for iteration in range(max_iterations):
@@ -105,27 +121,37 @@ class CarliniWagner(BaseAttack):
                 img_adv, adv_grid = self.to_model_space(w)
                 img_adv = img_adv.to(self.device)
                 img_adv.requires_grad = True
-                
-                #output of the layer before softmax
+
+                # output of the layer before softmax
                 output = model.get_logits(img_adv)
 
-                #pending success
+                # pending success
                 is_adversarial = self.pending_f(img_adv)
 
-                #calculate loss function and gradient of loss funcition on x
+                # calculate loss function and gradient of loss funcition on x
                 loss, loss_grad = self.loss_function(
-                    img_adv, c, self.target, img_ori, self.confidence, self.clip_min, self.clip_max 
+                    img_adv,
+                    c,
+                    self.target,
+                    img_ori,
+                    self.confidence,
+                    self.clip_min,
+                    self.clip_max,
                 )
 
-               
-                #calculate gradient of loss function on w
+                # calculate gradient of loss function on w
                 gradient = adv_grid.to(self.device) * loss_grad.to(self.device)
-                w = w + torch.from_numpy(optimizer(gradient.cpu().detach().numpy(), learning_rate)).float()
-                
+                w = (
+                    w
+                    + torch.from_numpy(
+                        optimizer(gradient.cpu().detach().numpy(), learning_rate)
+                    ).float()
+                )
+
                 if is_adversarial:
                     found_adv = True
-            
-            #do binary search on c
+
+            # do binary search on c
             if found_adv:
                 c_high = c
             else:
@@ -135,25 +161,25 @@ class CarliniWagner(BaseAttack):
                 c *= 10
             else:
                 c = (c_high + c_low) / 2
-        
-            if (step % 10 == 0):
-                print("iteration:{:.0f},loss:{:.4f}".format(step,loss))
+
+            if step % 10 == 0:
+                print("iteration:{:.0f},loss:{:.4f}".format(step, loss))
 
             # if (step == 50):
             #     learning_rate = learning_rate/100
 
-            #abort early
-            if(self.abort_early == True and (step % 10) == 0 and step > 100) :
+            # abort early
+            if self.abort_early == True and (step % 10) == 0 and step > 100:
                 print("early abortion?", loss, last_loss)
                 if not (loss <= 0.9999 * last_loss):
                     break
                 last_loss = loss
-        
 
         return img_adv.detach()
 
     def loss_function(
-        self, x_p, const, target, reconstructed_original, confidence, min_, max_):
+        self, x_p, const, target, reconstructed_original, confidence, min_, max_
+    ):
         """Returns the loss and the gradient of the loss w.r.t. x,
         assuming that logits = model(x)."""
 
@@ -162,11 +188,17 @@ class CarliniWagner(BaseAttack):
         logits = self.model.get_logits(x_p).to(self.device)
 
         ## find the largest class except the target class
-        targetlabel_mask = (torch.from_numpy(onehot_like(np.zeros(self.classnum), target))).double()
-        secondlargest_mask = (torch.from_numpy(np.ones(self.classnum)) - targetlabel_mask).to(self.device)
-        
-        secondlargest = np.argmax((logits.double() * secondlargest_mask).cpu().detach().numpy())
-      
+        targetlabel_mask = (
+            torch.from_numpy(onehot_like(np.zeros(self.classnum), target))
+        ).double()
+        secondlargest_mask = (
+            torch.from_numpy(np.ones(self.classnum)) - targetlabel_mask
+        ).to(self.device)
+
+        secondlargest = np.argmax(
+            (logits.double() * secondlargest_mask).cpu().detach().numpy()
+        )
+
         is_adv_loss = logits[0][secondlargest] - logits[0][target]
 
         # is_adv is True as soon as the is_adv_loss goes below 0
@@ -182,28 +214,42 @@ class CarliniWagner(BaseAttack):
         is_adv_loss = max(0, is_adv_loss)
 
         s = max_ - min_
-        squared_l2_distance = np.sum( ((x_p - reconstructed_original) ** 2).cpu().detach().numpy() ) / s ** 2
+        squared_l2_distance = (
+            np.sum(((x_p - reconstructed_original) ** 2).cpu().detach().numpy())
+            / s ** 2
+        )
         total_loss = squared_l2_distance + const * is_adv_loss
 
-
         squared_l2_distance_grad = (2 / s ** 2) * (x_p - reconstructed_original)
-        
-        #print(is_adv_loss_grad)
+
+        # print(is_adv_loss_grad)
         total_loss_grad = squared_l2_distance_grad + const * is_adv_loss_grad
         return total_loss, total_loss_grad
-    
+
     def pending_f(self, x_p):
         """Pending is the loss function is less than 0
         """
-        targetlabel_mask = torch.from_numpy(onehot_like(np.zeros(self.classnum), self.target))
+        targetlabel_mask = torch.from_numpy(
+            onehot_like(np.zeros(self.classnum), self.target)
+        )
         secondlargest_mask = torch.from_numpy(np.ones(self.classnum)) - targetlabel_mask
         targetlabel_mask = targetlabel_mask.to(self.device)
         secondlargest_mask = secondlargest_mask.to(self.device)
-        
-        Zx_i = np.max((self.model.get_logits(x_p).double().to(self.device) * secondlargest_mask).cpu().detach().numpy())
-        Zx_t = np.max((self.model.get_logits(x_p).double().to(self.device) * targetlabel_mask).cpu().detach().numpy())
 
-        if ( Zx_i - Zx_t  < - self.confidence):
+        Zx_i = np.max(
+            (self.model.get_logits(x_p).double().to(self.device) * secondlargest_mask)
+            .cpu()
+            .detach()
+            .numpy()
+        )
+        Zx_t = np.max(
+            (self.model.get_logits(x_p).double().to(self.device) * targetlabel_mask)
+            .cpu()
+            .detach()
+            .numpy()
+        )
+
+        if Zx_i - Zx_t < -self.confidence:
             return True
         else:
             return False
@@ -239,6 +285,3 @@ class CarliniWagner(BaseAttack):
 
         grad = grad * b
         return x, grad
-
-    
-    

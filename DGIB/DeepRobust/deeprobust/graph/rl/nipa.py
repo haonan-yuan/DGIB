@@ -1,6 +1,6 @@
-'''
+"""
 Still on testing stage. Haven't reproduced the performance yet.
-'''
+"""
 import os
 import sys
 import os.path as osp
@@ -14,17 +14,37 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 from copy import deepcopy
-from deeprobust.graph.rl.nipa_q_net_node import QNetNode, NStepQNetNode, node_greedy_actions
+from deeprobust.graph.rl.nipa_q_net_node import (
+    QNetNode,
+    NStepQNetNode,
+    node_greedy_actions,
+)
 from deeprobust.graph.rl.nstep_replay_mem import NstepReplayMem
 from deeprobust.graph.utils import loss_acc
 from itertools import count
 
-class NIPA(object):
 
-    def __init__(self, env, features, labels, idx_train, idx_test,
-            list_action_space, ratio, reward_type='binary', batch_size=30,
-            num_wrong=0, bilin_q=1, embed_dim=64, gm='mean_field',
-            mlp_hidden=64, max_lv=1, save_dir='checkpoint_dqn', device=None):
+class NIPA(object):
+    def __init__(
+        self,
+        env,
+        features,
+        labels,
+        idx_train,
+        idx_test,
+        list_action_space,
+        ratio,
+        reward_type="binary",
+        batch_size=30,
+        num_wrong=0,
+        bilin_q=1,
+        embed_dim=64,
+        gm="mean_field",
+        mlp_hidden=64,
+        max_lv=1,
+        save_dir="checkpoint_dqn",
+        device=None,
+    ):
 
         assert device is not None, "'device' cannot be None, please specify it"
 
@@ -40,29 +60,54 @@ class NIPA(object):
         N = len(degrees[degrees > 0])
         self.n_injected = len(degrees) - N
         assert self.n_injected == int(ratio * N)
-        self.injected_nodes = np.arange(N)[-self.n_injected: ]
+        self.injected_nodes = np.arange(N)[-self.n_injected :]
 
         self.reward_type = reward_type
         self.batch_size = batch_size
         self.save_dir = save_dir
         if not osp.exists(save_dir):
-            os.system('mkdir -p {}'.format(save_dir))
+            os.system("mkdir -p {}".format(save_dir))
 
         self.gm = gm
         self.device = device
 
-        self.mem_pool = NstepReplayMem(memory_size=500000, n_steps=3, balance_sample=reward_type == 'binary', model='nipa')
+        self.mem_pool = NstepReplayMem(
+            memory_size=500000,
+            n_steps=3,
+            balance_sample=reward_type == "binary",
+            model="nipa",
+        )
         self.env = env
 
         # self.net = QNetNode(features, labels, list_action_space)
         # self.old_net = QNetNode(features, labels, list_action_space)
-        self.net = NStepQNetNode(3, features, labels, list_action_space, self.n_injected,
-                          bilin_q=bilin_q, embed_dim=embed_dim, mlp_hidden=mlp_hidden,
-                          max_lv=max_lv, gm=gm, device=device)
+        self.net = NStepQNetNode(
+            3,
+            features,
+            labels,
+            list_action_space,
+            self.n_injected,
+            bilin_q=bilin_q,
+            embed_dim=embed_dim,
+            mlp_hidden=mlp_hidden,
+            max_lv=max_lv,
+            gm=gm,
+            device=device,
+        )
 
-        self.old_net = NStepQNetNode(3, features, labels, list_action_space, self.n_injected,
-                          bilin_q=bilin_q, embed_dim=embed_dim, mlp_hidden=mlp_hidden,
-                          max_lv=max_lv, gm=gm, device=device)
+        self.old_net = NStepQNetNode(
+            3,
+            features,
+            labels,
+            list_action_space,
+            self.n_injected,
+            bilin_q=bilin_q,
+            embed_dim=embed_dim,
+            mlp_hidden=mlp_hidden,
+            max_lv=max_lv,
+            gm=gm,
+            device=device,
+        )
 
         self.net = self.net.to(device)
         self.old_net = self.old_net.to(device)
@@ -83,8 +128,12 @@ class NIPA(object):
 
     def make_actions(self, time_t, greedy=False):
         # TODO
-        self.eps = self.eps_end + max(0., (self.eps_start - self.eps_end)
-                * (self.eps_step - max(0., self.step)) / self.eps_step)
+        self.eps = self.eps_end + max(
+            0.0,
+            (self.eps_start - self.eps_end)
+            * (self.eps_step - max(0.0, self.step))
+            / self.eps_step,
+        )
 
         self.step += 1
         if random.random() < self.eps and not greedy:
@@ -94,7 +143,9 @@ class NIPA(object):
             cur_state = self.env.getStateRef()
             list_at = self.env.uniformRandActions()
             actions = self.possible_actions(cur_state, list_at, time_t)
-            actions, values = self.net(time_t, cur_state, actions, greedy_acts=True, is_inference=True)
+            actions, values = self.net(
+                time_t, cur_state, actions, greedy_acts=True, is_inference=True
+            )
 
             assert len(actions) == len(list_at)
             # actions = list(actions.cpu().numpy())
@@ -125,8 +176,14 @@ class NIPA(object):
                 s_prime = None
                 # self.env.init_overall_steps()
 
-            self.mem_pool.add_list(list_st, list_at, rewards, s_prime,
-                                    [self.env.isTerminal()] * len(list_at), t)
+            self.mem_pool.add_list(
+                list_st,
+                list_at,
+                rewards,
+                s_prime,
+                [self.env.isTerminal()] * len(list_at),
+                t,
+            )
             t += 1
 
     def eval(self, training=True):
@@ -144,16 +201,22 @@ class NIPA(object):
         adj = self.env.classifier.norm_tool.norm_extra(extra_adj)
         labels = torch.cat((self.labels, self.env.modified_label_list[0]))
         # self.classifier.fit(self.features, adj, labels, self.idx_train, self.idx_val, normalize=False)
-        self.env.classifier.fit(self.features, adj, labels, self.idx_train, normalize=False)
+        self.env.classifier.fit(
+            self.features, adj, labels, self.idx_train, normalize=False
+        )
         output = self.env.classifier(self.features, adj)
         loss, acc = loss_acc(output, self.labels, self.idx_test)
-        print('\033[93m average test: acc %.5f\033[0m' % (acc))
+        print("\033[93m average test: acc %.5f\033[0m" % (acc))
 
         if training == True and self.best_eval is None or acc < self.best_eval:
-            print('----saving to best attacker since this is the best attack rate so far.----')
-            torch.save(self.net.state_dict(), osp.join(self.save_dir, 'epoch-best.model'))
-            with open(osp.join(self.save_dir, 'epoch-best.txt'), 'w') as f:
-                f.write('%.4f\n' % acc)
+            print(
+                "----saving to best attacker since this is the best attack rate so far.----"
+            )
+            torch.save(
+                self.net.state_dict(), osp.join(self.save_dir, "epoch-best.model")
+            )
+            with open(osp.join(self.save_dir, "epoch-best.txt"), "w") as f:
+                f.write("%.4f\n" % acc)
             # with open(osp.join(self.save_dir, 'attack_solution.txt'), 'w') as f:
             #     for i in range(len(self.idx_meta)):
             #         f.write('%d: [' % self.idx_meta[i])
@@ -165,7 +228,7 @@ class NIPA(object):
     def train(self, num_episodes=10, lr=0.01):
         optimizer = optim.Adam(self.net.parameters(), lr=lr)
         self.env.init_overall_steps()
-        pbar = tqdm(range(self.burn_in), unit='batch')
+        pbar = tqdm(range(self.burn_in), unit="batch")
         for p in pbar:
             self.run_simulation()
         self.mem_pool.print_count()
@@ -179,12 +242,21 @@ class NIPA(object):
             for t in count():
                 self.run_simulation()
 
-                cur_time, list_st, list_at, list_rt, list_s_primes, list_term = self.mem_pool.sample(batch_size=self.batch_size)
+                (
+                    cur_time,
+                    list_st,
+                    list_at,
+                    list_rt,
+                    list_s_primes,
+                    list_term,
+                ) = self.mem_pool.sample(batch_size=self.batch_size)
                 list_target = torch.Tensor(list_rt).to(self.device)
 
                 if not list_term[0]:
-                    actions = self.possible_actions(list_st, list_at, cur_time+1)
-                    _, q_rhs = self.old_net(cur_time + 1, list_s_primes, actions, greedy_acts=True)
+                    actions = self.possible_actions(list_st, list_at, cur_time + 1)
+                    _, q_rhs = self.old_net(
+                        cur_time + 1, list_s_primes, actions, greedy_acts=True
+                    )
                     list_target += self.GAMMA * q_rhs
 
                 # list_target = list_target.view(-1, 1)
@@ -203,7 +275,10 @@ class NIPA(object):
 
                 # pbar.set_description('eps: %.5f, loss: %0.5f, q_val: %.5f' % (self.eps, loss, torch.mean(q_sa)) )
                 if t % 20 == 0:
-                    print('eps: %.5f, loss: %0.5f, q_val: %.5f' % (self.eps, loss, torch.mean(q_sa)) )
+                    print(
+                        "eps: %.5f, loss: %0.5f, q_val: %.5f"
+                        % (self.eps, loss, torch.mean(q_sa))
+                    )
 
                 if self.env.isTerminal():
                     break
@@ -215,11 +290,11 @@ class NIPA(object):
                 self.eval()
 
     def possible_actions(self, list_st, list_at, t):
-        '''
+        """
             list_st: current state
             list_at: current action
             return: actions for next state
-        '''
+        """
         t = t % 3
         if t == 0:
             return np.tile(self.injected_nodes, ((len(list_at), 1)))
@@ -233,4 +308,3 @@ class NIPA(object):
 
         if t == 2:
             return self.possible_labels.repeat((len(list_at), 1))
-

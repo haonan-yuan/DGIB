@@ -1,11 +1,11 @@
-'''
+"""
     Adversarial Attacks on Neural Networks for Graph Data. ICML 2018.
         https://arxiv.org/abs/1806.02371
     Author's Implementation
        https://github.com/Hanjun-Dai/graph_adversarial_attack
     This part of code is adopted from the author's implementation but modified
     to be integrated into the repository.
-'''
+"""
 import os
 import sys
 import numpy as np
@@ -19,14 +19,25 @@ import torch.optim as optim
 from tqdm import tqdm
 from deeprobust.graph.rl.env import GraphNormTool
 
-class QNetNode(nn.Module):
 
-    def __init__(self, node_features, node_labels, list_action_space, bilin_q=1, embed_dim=64, mlp_hidden=64, max_lv=1, gm='mean_field', device='cpu'):
-        '''
+class QNetNode(nn.Module):
+    def __init__(
+        self,
+        node_features,
+        node_labels,
+        list_action_space,
+        bilin_q=1,
+        embed_dim=64,
+        mlp_hidden=64,
+        max_lv=1,
+        gm="mean_field",
+        device="cpu",
+    ):
+        """
         bilin_q: bilinear q or not
         mlp_hidden: mlp hidden layer size
         mav_lv: max rounds of message passing
-        '''
+        """
         super(QNetNode, self).__init__()
         self.node_features = node_features
         self.node_labels = node_labels
@@ -87,19 +98,19 @@ class QNetNode(nn.Module):
             node_embed = input_node_linear.clone()
             if picked_nodes is not None and picked_nodes[i] is not None:
                 with torch.set_grad_enabled(mode=not is_inference):
-                    picked_sp =  self.make_spmat(self.total_nodes, 1, picked_nodes[i], 0)
+                    picked_sp = self.make_spmat(self.total_nodes, 1, picked_nodes[i], 0)
                     node_embed += torch.spmm(picked_sp, self.bias_picked)
                     region = self.list_action_space[picked_nodes[i]]
 
             if not self.bilin_q:
                 with torch.set_grad_enabled(mode=not is_inference):
-                # with torch.no_grad():
+                    # with torch.no_grad():
                     target_sp = self.make_spmat(self.total_nodes, 1, target_nodes[i], 0)
                     node_embed += torch.spmm(target_sp, self.bias_target)
 
             with torch.set_grad_enabled(mode=not is_inference):
                 device = self.node_features.device
-                adj = self.norm_tool.norm_extra( batch_graph[i].get_extra_adj(device))
+                adj = self.norm_tool.norm_extra(batch_graph[i].get_extra_adj(device))
 
                 lv = 0
                 input_message = node_embed
@@ -107,7 +118,7 @@ class QNetNode(nn.Module):
                 node_embed = F.relu(input_message)
                 while lv < self.max_lv:
                     n2npool = torch.spmm(adj, node_embed)
-                    node_linear = self.conv_params( n2npool )
+                    node_linear = self.conv_params(n2npool)
                     merged_linear = node_linear + input_message
                     node_embed = F.relu(merged_linear)
                     lv += 1
@@ -129,7 +140,7 @@ class QNetNode(nn.Module):
 
                 embed_s_a = torch.cat((node_embed, graph_embed), dim=1)
                 if self.mlp_hidden:
-                    embed_s_a = F.relu( self.linear_1(embed_s_a) )
+                    embed_s_a = F.relu(self.linear_1(embed_s_a))
                 raw_pred = self.linear_out(embed_s_a)
 
                 if self.bilin_q:
@@ -137,13 +148,27 @@ class QNetNode(nn.Module):
                 list_pred.append(raw_pred)
 
         if greedy_acts:
-            actions, _ = node_greedy_actions(target_nodes, picked_nodes, list_pred, self)
+            actions, _ = node_greedy_actions(
+                target_nodes, picked_nodes, list_pred, self
+            )
 
         return actions, list_pred
 
-class NStepQNetNode(nn.Module):
 
-    def __init__(self, num_steps, node_features, node_labels, list_action_space, bilin_q=1, embed_dim=64, mlp_hidden=64, max_lv=1, gm='mean_field', device='cpu'):
+class NStepQNetNode(nn.Module):
+    def __init__(
+        self,
+        num_steps,
+        node_features,
+        node_labels,
+        list_action_space,
+        bilin_q=1,
+        embed_dim=64,
+        mlp_hidden=64,
+        max_lv=1,
+        gm="mean_field",
+        device="cpu",
+    ):
 
         super(NStepQNetNode, self).__init__()
         self.node_features = node_features
@@ -154,12 +179,24 @@ class NStepQNetNode(nn.Module):
         list_mod = []
         for i in range(0, num_steps):
             # list_mod.append(QNetNode(node_features, node_labels, list_action_space))
-            list_mod.append(QNetNode(node_features, node_labels, list_action_space, bilin_q, embed_dim, mlp_hidden, max_lv, gm=gm, device=device))
+            list_mod.append(
+                QNetNode(
+                    node_features,
+                    node_labels,
+                    list_action_space,
+                    bilin_q,
+                    embed_dim,
+                    mlp_hidden,
+                    max_lv,
+                    gm=gm,
+                    device=device,
+                )
+            )
 
         self.list_mod = nn.ModuleList(list_mod)
         self.num_steps = num_steps
 
-    def forward(self, time_t, states, actions, greedy_acts = False, is_inference=False):
+    def forward(self, time_t, states, actions, greedy_acts=False, is_inference=False):
         assert time_t >= 0 and time_t < self.num_steps
 
         return self.list_mod[time_t](time_t, states, actions, greedy_acts, is_inference)
@@ -187,6 +224,7 @@ def _param_init(m):
         m.bias.data.zero_()
         glorot_uniform(m.weight.data)
 
+
 def weights_init(m):
     for p in m.modules():
         if isinstance(p, nn.ParameterList):
@@ -196,8 +234,9 @@ def weights_init(m):
             _param_init(p)
 
     for name, p in m.named_parameters():
-        if not '.' in name: # top-level parameters
+        if not "." in name:  # top-level parameters
             _param_init(p)
+
 
 def node_greedy_actions(target_nodes, picked_nodes, list_q, net):
     assert len(target_nodes) == len(list_q)
@@ -224,5 +263,3 @@ def node_greedy_actions(target_nodes, picked_nodes, list_q, net):
             actions.append(act)
 
     return torch.cat(actions, dim=0).data, torch.cat(values, dim=0).data
-
-

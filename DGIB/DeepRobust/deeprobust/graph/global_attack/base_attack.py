@@ -5,9 +5,11 @@ from deeprobust.graph import utils
 import os.path as osp
 import numpy as np
 
-class BaseAttack(Module):
 
-    def __init__(self, model, nnodes, attack_structure=True, attack_features=False, device='cpu'):
+class BaseAttack(Module):
+    def __init__(
+        self, model, nnodes, attack_structure=True, attack_features=False, device="cpu"
+    ):
         super(BaseAttack, self).__init__()
 
         self.surrogate = model
@@ -26,17 +28,18 @@ class BaseAttack(Module):
         pass
 
     def check_adj(self, adj):
-        '''
+        """
             check if the modified adjacency is symmetric and unweighted
-        '''
+        """
         assert np.abs(adj - adj.T).sum() == 0, "Input graph is not symmetric"
         assert adj.tocsr().max() == 1, "Max value should be 1!"
         assert adj.tocsr().min() == 0, "Min value should be 0!"
 
-    def save_adj(self, root=r'/tmp/', name='mod_adj'):
-        assert self.modified_adj is not None, \
-                'modified_adj is None! Please perturb the graph first.'
-        name = name + '.npz'
+    def save_adj(self, root=r"/tmp/", name="mod_adj"):
+        assert (
+            self.modified_adj is not None
+        ), "modified_adj is None! Please perturb the graph first."
+        name = name + ".npz"
         modified_adj = self.modified_adj
 
         if type(modified_adj) is torch.Tensor:
@@ -45,10 +48,11 @@ class BaseAttack(Module):
         else:
             sp.save_npz(osp.join(root, name), modified_adj)
 
-    def save_features(self, root=r'/tmp/', name='mod_features'):
-        assert self.modified_features is not None, \
-                'modified_features is None! Please perturb the graph first.'
-        name = name + '.npz'
+    def save_features(self, root=r"/tmp/", name="mod_features"):
+        assert (
+            self.modified_features is not None
+        ), "modified_features is None! Please perturb the graph first."
+        name = name + ".npz"
         modified_features = self.modified_features
 
         if type(modified_features) is torch.Tensor:
@@ -56,5 +60,3 @@ class BaseAttack(Module):
             sp.save_npz(osp.join(root, name), sparse_features)
         else:
             sp.save_npz(osp.join(root, name), modified_features)
-
-

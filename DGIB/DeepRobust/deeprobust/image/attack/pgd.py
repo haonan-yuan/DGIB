@@ -7,9 +7,9 @@ import torch.nn.functional as F
 
 from deeprobust.image.attack.base_attack import BaseAttack
 
-class PGD(BaseAttack):
 
-    def __init__(self, model, device = 'cuda'):
+class PGD(BaseAttack):
+    def __init__(self, model, device="cuda"):
 
         super(PGD, self).__init__(model, device)
 
@@ -21,25 +21,28 @@ class PGD(BaseAttack):
         assert self.check_type_device(image, label)
         assert self.parse_params(**kwargs)
 
-        return pgd_attack(self.model,
-                   self.image,
-                   self.label,
-                   self.epsilon,
-                   self.clip_max,
-                   self.clip_min,
-                   self.num_steps,
-                   self.step_size,
-                   self.print_process)
-                   ##default parameter for mnist data set.
+        return pgd_attack(
+            self.model,
+            self.image,
+            self.label,
+            self.epsilon,
+            self.clip_max,
+            self.clip_min,
+            self.num_steps,
+            self.step_size,
+            self.print_process,
+        )
+        ##default parameter for mnist data set.
 
-    def parse_params(self,
-                     epsilon = 0.03,
-                     num_steps = 40,
-                     step_size = 0.01,
-                     clip_max = 1.0,
-                     clip_min = 0.0,
-                     print_process = False
-                     ):
+    def parse_params(
+        self,
+        epsilon=0.03,
+        num_steps=40,
+        step_size=0.01,
+        clip_max=1.0,
+        clip_min=0.0,
+        print_process=False,
+    ):
         self.epsilon = epsilon
         self.num_steps = num_steps
         self.step_size = step_size
@@ -48,19 +51,14 @@ class PGD(BaseAttack):
         self.print_process = print_process
         return True
 
-def pgd_attack(model,
-                  X,
-                  y,
-                  epsilon,
-                  clip_max,
-                  clip_min,
-                  num_steps,
-                  step_size,
-                  print_process):
+
+def pgd_attack(
+    model, X, y, epsilon, clip_max, clip_min, num_steps, step_size, print_process
+):
 
     out = model(X)
     err = (out.data.max(1)[1] != y.data).float().sum()
-    #TODO: find a other way
+    # TODO: find a other way
     device = X.device
     imageArray = X.detach().cpu().numpy()
     X_random = np.random.uniform(-epsilon, epsilon, X.shape)
@@ -75,7 +73,7 @@ def pgd_attack(model,
         loss = nn.CrossEntropyLoss()(pred, y)
 
         if print_process:
-            print("iteration {:.0f}, loss:{:.4f}".format(i,loss))
+            print("iteration {:.0f}, loss:{:.4f}".format(i, loss))
 
         loss.backward()
 
@@ -90,6 +88,4 @@ def pgd_attack(model,
         X_pgd.requires_grad_()
         X_pgd.retain_grad()
 
-
     return X_pgd
-
